@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -7,12 +7,12 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   TextInput,
-} from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
-import Button from '@components/common/Button';
-import { apiService } from '@services/api';
-import { COLORS, SIZES, SHADOWS } from '@constants/theme';
-import type { BlogPost } from '@types/index';
+} from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
+import Button from "@components/common/Button";
+import { apiService } from "@/Services/Api";
+import { COLORS, SIZES, SHADOWS } from "@constants/theme";
+import type { BlogPost } from "@types/index";
 
 interface PostOfWeekSectionProps {
   onPostClick?: (slug: string) => void;
@@ -27,7 +27,7 @@ const PostOfWeekSection: React.FC<PostOfWeekSectionProps> = ({
 }) => {
   const [latestPost, setLatestPost] = useState<BlogPost | null>(null);
   const [loading, setLoading] = useState(true);
-  const [email, setEmail] = useState('');
+  const [email, setEmail] = useState("");
 
   useEffect(() => {
     loadLatestPost();
@@ -41,7 +41,7 @@ const PostOfWeekSection: React.FC<PostOfWeekSectionProps> = ({
         setLatestPost(posts[0]);
       }
     } catch (error) {
-      console.error('Error loading latest post:', error);
+      console.error("Error loading latest post:", error);
     } finally {
       setLoading(false);
     }
@@ -49,8 +49,8 @@ const PostOfWeekSection: React.FC<PostOfWeekSectionProps> = ({
 
   const handleSubscribe = () => {
     if (email.trim()) {
-      alert('Thank you for subscribing!');
-      setEmail('');
+      alert("Thank you for subscribing!");
+      setEmail("");
     }
   };
 
@@ -80,7 +80,10 @@ const PostOfWeekSection: React.FC<PostOfWeekSectionProps> = ({
     );
   }
 
-  const firstTwoSubheadings = latestPost.first_two_subheadings || latestPost.subheadings?.slice(0, 2) || [];
+  const firstTwoSubheadings =
+    latestPost.first_two_subheadings ||
+    latestPost.subheadings?.slice(0, 2) ||
+    [];
 
   return (
     <View style={styles.container}>
@@ -92,7 +95,7 @@ const PostOfWeekSection: React.FC<PostOfWeekSectionProps> = ({
           <Text style={styles.title}>{latestPost.title}</Text>
           <Text style={styles.titleHighlight}>Connecting the Dots</Text>
           <View style={styles.underline} />
-          
+
           <Text style={styles.description}>{latestPost.description}</Text>
 
           {latestPost.image_2 && (
@@ -151,11 +154,12 @@ const PostOfWeekSection: React.FC<PostOfWeekSectionProps> = ({
         >
           <Text style={styles.sidebarTitle}>We Have Some Good News</Text>
           <View style={styles.sidebarUnderline} />
-          
+
           <Text style={styles.sidebarText}>
-            Don't hesitate – sign up for our newsletter now to stay informed about
-            our services, gain valuable healthcare insights, and access exclusive
-            offers from Etha-Atlantic Memorial Hospital in Lagos, Nigeria.
+            Don't hesitate – sign up for our newsletter now to stay informed
+            about our services, gain valuable healthcare insights, and access
+            exclusive offers from Etha-Atlantic Memorial Hospital in Lagos,
+            Nigeria.
           </Text>
 
           <TextInput
@@ -177,10 +181,12 @@ const PostOfWeekSection: React.FC<PostOfWeekSectionProps> = ({
 
           <View style={styles.divider} />
 
-          <Text style={styles.packagesTitle}>We offer the Best Healthcare Plans</Text>
+          <Text style={styles.packagesTitle}>
+            We offer the Best Healthcare Plans
+          </Text>
           <Text style={styles.packagesText}>
-            Check out our different healthcare packages, ranging from health checks,
-            lifestyle plans, UTI checks to sexual health.
+            Check out our different healthcare packages, ranging from health
+            checks, lifestyle plans, UTI checks to sexual health.
           </Text>
 
           <Button
@@ -211,7 +217,7 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: SIZES.h4,
-    fontWeight: '300',
+    fontWeight: "300",
     color: COLORS.textSecondary,
     marginBottom: SIZES.lg,
     paddingHorizontal: SIZES.paddingLg,
@@ -225,13 +231,13 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: SIZES.h2,
-    fontWeight: '300',
+    fontWeight: "300",
     color: COLORS.textPrimary,
     lineHeight: SIZES.h2 * 1.2,
   },
   titleHighlight: {
     fontSize: SIZES.h2,
-    fontWeight: '700',
+    fontWeight: "700",
     color: COLORS.primary,
     marginTop: SIZES.sm,
     marginBottom: SIZES.sm,
@@ -249,7 +255,7 @@ const styles = StyleSheet.create({
     marginBottom: SIZES.lg,
   },
   postImage: {
-    width: '100%',
+    width: "100%",
     height: 200,
     borderRadius: SIZES.radiusMd,
     marginBottom: SIZES.lg,
@@ -262,7 +268,7 @@ const styles = StyleSheet.create({
   },
   subheadingTitle: {
     fontSize: SIZES.h4,
-    fontWeight: '700',
+    fontWeight: "700",
     color: COLORS.textPrimary,
     marginBottom: SIZES.sm,
   },
@@ -272,7 +278,7 @@ const styles = StyleSheet.create({
     color: COLORS.textSecondary,
   },
   subheadingImage: {
-    width: '100%',
+    width: "100%",
     height: 180,
     borderRadius: SIZES.radiusMd,
   },
@@ -281,7 +287,7 @@ const styles = StyleSheet.create({
   },
   detailsButton: {
     marginTop: SIZES.md,
-    alignSelf: 'flex-start',
+    alignSelf: "flex-start",
   },
   sidebar: {
     padding: SIZES.paddingLg,
@@ -290,7 +296,7 @@ const styles = StyleSheet.create({
   },
   sidebarTitle: {
     fontSize: SIZES.h4,
-    fontWeight: '700',
+    fontWeight: "700",
     color: COLORS.white,
     marginBottom: SIZES.sm,
   },
@@ -303,11 +309,11 @@ const styles = StyleSheet.create({
   sidebarText: {
     fontSize: SIZES.body2,
     lineHeight: SIZES.body2 * 1.5,
-    color: 'rgba(255, 255, 255, 0.9)',
+    color: "rgba(255, 255, 255, 0.9)",
     marginBottom: SIZES.lg,
   },
   emailInput: {
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    backgroundColor: "rgba(255, 255, 255, 0.2)",
     paddingVertical: SIZES.paddingMd,
     paddingHorizontal: SIZES.paddingLg,
     borderRadius: SIZES.radiusFull,
@@ -321,39 +327,39 @@ const styles = StyleSheet.create({
   },
   divider: {
     height: 1,
-    backgroundColor: 'rgba(255, 255, 255, 0.3)',
+    backgroundColor: "rgba(255, 255, 255, 0.3)",
     marginVertical: SIZES.lg,
   },
   packagesTitle: {
     fontSize: SIZES.h5,
-    fontWeight: '700',
+    fontWeight: "700",
     color: COLORS.white,
-    textAlign: 'center',
+    textAlign: "center",
     marginBottom: SIZES.sm,
   },
   packagesText: {
     fontSize: SIZES.body2,
     lineHeight: SIZES.body2 * 1.5,
     color: COLORS.white,
-    textAlign: 'center',
+    textAlign: "center",
     marginBottom: SIZES.lg,
   },
   packagesButton: {
     backgroundColor: COLORS.secondary,
   },
   footer: {
-    alignItems: 'center',
+    alignItems: "center",
     paddingHorizontal: SIZES.paddingLg,
   },
   loadingContainer: {
     paddingVertical: SIZES.xxl,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   emptyContainer: {
     paddingVertical: SIZES.xxl,
     paddingHorizontal: SIZES.paddingLg,
-    alignItems: 'center',
+    alignItems: "center",
     backgroundColor: COLORS.gray[50],
     borderRadius: SIZES.radiusXl,
     margin: SIZES.paddingLg,
@@ -364,14 +370,14 @@ const styles = StyleSheet.create({
   },
   emptyTitle: {
     fontSize: SIZES.h4,
-    fontWeight: '700',
+    fontWeight: "700",
     color: COLORS.textSecondary,
     marginBottom: SIZES.sm,
   },
   emptyText: {
     fontSize: SIZES.body2,
     color: COLORS.textLight,
-    textAlign: 'center',
+    textAlign: "center",
     marginBottom: SIZES.lg,
   },
   emptyButton: {

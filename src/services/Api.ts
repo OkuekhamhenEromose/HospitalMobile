@@ -1,5 +1,5 @@
 import { API_CONFIG } from '../constants/config';
-import { storageService } from './Storage';
+import { storageService } from './storage';
 import type { LoginData, RegisterData, AuthResponse, BlogPost } from '../types';
 
 const { BASE_URL, TIMEOUT, TTL } = API_CONFIG;
