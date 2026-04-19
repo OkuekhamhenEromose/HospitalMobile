@@ -5,47 +5,43 @@
     "esModuleInterop": true,
     "skipLibCheck": true,
     "resolveJsonModule": true,
-    "moduleResolution": "node",
     "allowSyntheticDefaultImports": true,
     "jsx": "react-native",
     "lib": [
       "es2020"
     ],
-    "types": [
-      "react-native",
-      "jest"
-    ],
-    "baseUrl": "./src",
+    "types": [],
+    "moduleResolution": "bundler",
     "paths": {
       "@/*": [
-        "./*"
+        "./src/*"
       ],
       "@components/*": [
-        "components/*"
+        "./src/components/*"
       ],
       "@screens/*": [
-        "screens/*"
+        "./src/screens/*"
       ],
       "@services/*": [
-        "services/*"
+        "./src/services/*"
       ],
       "@navigation/*": [
-        "navigation/*"
+        "./src/navigation/*"
       ],
       "@contexts/*": [
-        "contexts/*"
+        "./src/contexts/*"
       ],
       "@types/*": [
-        "types/*"
+        "./src/types/*"
       ],
       "@constants/*": [
-        "constants/*"
+        "./src/constants/*"
       ],
       "@utils/*": [
-        "utils/*"
+        "./src/utils/*"
       ],
       "@assets/*": [
-        "assets/*"
+        "./src/assets/*"
       ]
     }
   },
