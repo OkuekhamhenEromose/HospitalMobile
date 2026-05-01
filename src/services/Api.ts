@@ -1,4 +1,4 @@
-import { API_CONFIG } from '../constants/config';
+import { API_CONFIG } from '../constants/Config';
 import { storageService } from './storage';
 import type { LoginData, RegisterData, AuthResponse, BlogPost } from '../types';
 

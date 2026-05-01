@@ -3,13 +3,13 @@ import { ScrollView, StyleSheet } from 'react-native';
 import { useNavigation, DrawerActions } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import SafeAreaWrapper from '@components/common/SafeAreaWrapper';
-import Footer from '@components/layout/Footer';
+import Footer from '@components/Layout/Footer';
 import HeroSection from './components/HeroSection';
 import AboutSection from './components/AboutSection';
 import ServicesSection from './components/ServicesSection';
 import PostOfWeekSection from './components/PostOfWeekSection';
 import BookAppointmentSection from './components/BookAppointmentSection';
-import { COLORS } from '@constants/theme';
+import { COLORS } from '@constants/Theme';
 import type { MainDrawerParamList, RootStackParamList } from '@types/navigation';
 
 type HomeScreenNavigationProp = NativeStackNavigationProp<

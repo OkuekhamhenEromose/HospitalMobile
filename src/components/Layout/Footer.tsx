@@ -8,7 +8,7 @@ import {
 } from 'react-native';
 import { MaterialIcons, FontAwesome } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { COLORS, SIZES } from '@constants/theme';
+import { COLORS, SIZES } from '@constants/Theme';
 
 interface FooterProps {
   onBookAppointment?: () => void;

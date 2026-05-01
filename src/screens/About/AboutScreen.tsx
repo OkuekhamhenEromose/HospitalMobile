@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import SafeAreaWrapper from '@components/common/SafeAreaWrapper';
-import { COLORS, SIZES } from '@constants/theme';
+import { COLORS, SIZES } from '@constants/Theme';
 
 const AboutScreen: React.FC = () => {
   return (

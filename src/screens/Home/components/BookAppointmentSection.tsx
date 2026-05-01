@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, Image } from 'react-native';
-import Button from '@components/common/Button';
-import { COLORS, SIZES } from '@constants/theme';
+// import Button from '@components/common/Button';
+import { COLORS, SIZES } from '@constants/Theme';
 
 interface BookAppointmentSectionProps {
   onBookAppointment?: () => void;
@@ -45,13 +45,13 @@ const BookAppointmentSection: React.FC<BookAppointmentSectionProps> = ({
           <Text style={styles.ctaText}>
             Book an appointment to see a medical doctor for all your health concerns.
           </Text>
-          <Button
+          {/* <Button
             title="BOOK AN APPOINTMENT"
             onPress={onBookAppointment || (() => {})}
             variant="primary"
             size="medium"
             style={styles.ctaButton}
-          />
+          /> */}
         </View>
       </View>
     </View>

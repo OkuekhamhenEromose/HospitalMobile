@@ -9,9 +9,9 @@ import {
   TextInput,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
-import Button from "@components/common/Button";
-import { apiService } from "@/Services/Api";
-import { COLORS, SIZES, SHADOWS } from "@constants/theme";
+// import Button from "@components/common/Button";
+import { apiService } from "@/Services/api";
+import { COLORS, SIZES, SHADOWS } from "@constants/Theme";
 import type { BlogPost } from "@types/index";
 
 interface PostOfWeekSectionProps {
@@ -70,12 +70,12 @@ const PostOfWeekSection: React.FC<PostOfWeekSectionProps> = ({
         <Text style={styles.emptyText}>
           We're working on creating valuable content for you. Check back soon!
         </Text>
-        <Button
+        {/* <Button
           title="Visit Blog"
           onPress={onViewAllPosts || (() => {})}
           variant="primary"
           style={styles.emptyButton}
-        />
+        /> */}
       </View>
     );
   }
@@ -136,13 +136,13 @@ const PostOfWeekSection: React.FC<PostOfWeekSectionProps> = ({
               <Text style={styles.subheadingDescription}>
                 {firstTwoSubheadings[1].description}
               </Text>
-              <Button
+              {/* <Button
                 title="GET MORE DETAILS!"
                 onPress={() => onPostClick?.(latestPost.slug)}
                 variant="primary"
                 size="small"
                 style={styles.detailsButton}
-              />
+              /> */}
             </View>
           )}
         </View>
@@ -172,12 +172,12 @@ const PostOfWeekSection: React.FC<PostOfWeekSectionProps> = ({
             autoCapitalize="none"
           />
 
-          <Button
+          {/* <Button
             title="Subscribe"
             onPress={handleSubscribe}
             variant="primary"
             style={styles.subscribeButton}
-          />
+          /> */}
 
           <View style={styles.divider} />
 
@@ -189,22 +189,22 @@ const PostOfWeekSection: React.FC<PostOfWeekSectionProps> = ({
             checks, lifestyle plans, UTI checks to sexual health.
           </Text>
 
-          <Button
+          {/* <Button
             title="OUR PACKAGES »"
             onPress={onPackagesClick || (() => {})}
             variant="secondary"
             style={styles.packagesButton}
-          />
+          /> */}
         </LinearGradient>
       </View>
 
       <View style={styles.footer}>
-        <Button
+        {/* <Button
           title="View All Blog Posts"
           onPress={onViewAllPosts || (() => {})}
           variant="primary"
           size="large"
-        />
+        /> */}
       </View>
     </View>
   );

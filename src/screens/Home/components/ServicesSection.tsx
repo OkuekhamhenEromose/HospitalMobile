@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
-import { COLORS, SIZES } from '@constants/theme';
+import { COLORS, SIZES } from '@constants/Theme';
 
 interface Service {
   icon: keyof typeof MaterialIcons.glyphMap;

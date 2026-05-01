@@ -1,8 +1,8 @@
 import React from 'react';
 import { View, Text, StyleSheet, Dimensions } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import Button from '@components/common/Button';
-import { COLORS, SIZES, SHADOWS } from '@constants/theme';
+// import Button from '@components/common/Button';
+import { COLORS, SIZES, SHADOWS } from '@constants/Theme';
 
 const { width } = Dimensions.get('window');
 
@@ -89,13 +89,13 @@ const AboutSection: React.FC<AboutSectionProps> = ({ onBookNow }) => {
           <Text style={[styles.cardText, styles.ctaText]}>
             Book an appointment to see a Medical Doctor for all your health concerns.
           </Text>
-          <Button
+          {/* <Button
             title="BOOK NOW"
             onPress={onBookNow || (() => {})}
             variant="primary"
             size="medium"
             style={styles.ctaButton}
-          />
+          /> */}
         </View>
       </View>
     </View>

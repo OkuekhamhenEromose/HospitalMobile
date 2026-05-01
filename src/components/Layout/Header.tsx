@@ -9,7 +9,7 @@ import {
   StatusBar,
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
-import { COLORS, SIZES, SHADOWS } from '../../styles/theme';
+import { COLORS, SIZES, SHADOWS } from '../../styles/Theme';
 
 interface HeaderProps {
   onMenuPress?: () => void;

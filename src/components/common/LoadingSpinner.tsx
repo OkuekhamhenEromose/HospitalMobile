@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, ActivityIndicator, Text, StyleSheet } from 'react-native';
-import { COLORS, SIZES } from '../../styles/theme';
+import { COLORS, SIZES } from '../../styles/Theme';
 
 interface LoadingSpinnerProps {
   message?: string;

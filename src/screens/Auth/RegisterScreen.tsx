@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import SafeAreaWrapper from '@components/common/SafeAreaWrapper';
-import { COLORS, SIZES } from '@constants/theme';
+import { COLORS, SIZES } from '@constants/Theme';
 
 const RegisterScreen: React.FC = () => {
   return (

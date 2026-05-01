@@ -9,7 +9,7 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
-import { COLORS, SIZES, SHADOWS } from '../../../styles/theme';
+import { COLORS, SIZES, SHADOWS } from '../../../styles/Theme';
 
 const { width, height } = Dimensions.get('window');
 
@@ -103,7 +103,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({
         </View>
 
         <TouchableOpacity style={styles.whatsappButton} activeOpacity={0.8}>
-          <MaterialIcons name="whatsapp" size={32} color={COLORS.white} />
+          {/* <MaterialIcons name="whatsapp" size={32} color={COLORS.white} /> */}
         </TouchableOpacity>
       </ImageBackground>
     </View>
