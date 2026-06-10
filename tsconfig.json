@@ -1,5 +1,5 @@
 {
-  "extends": "expo/tsconfig.base",
+  "extends": "expo/tsconfig.base.json",
   "compilerOptions": {
     "strict": true,
     "esModuleInterop": true,
@@ -7,49 +7,22 @@
     "resolveJsonModule": true,
     "allowSyntheticDefaultImports": true,
     "jsx": "react-native",
-    "lib": [
-      "es2020"
-    ],
+    "lib": ["es2020"],
     "types": [],
     "moduleResolution": "bundler",
     "paths": {
-      "@/*": [
-        "./src/*"
-      ],
-      "@components/*": [
-        "./src/components/*"
-      ],
-      "@screens/*": [
-        "./src/screens/*"
-      ],
-      "@services/*": [
-        "./src/services/*"
-      ],
-      "@navigation/*": [
-        "./src/navigation/*"
-      ],
-      "@contexts/*": [
-        "./src/contexts/*"
-      ],
-      "@types/*": [
-        "./src/types/*"
-      ],
-      "@constants/*": [
-        "./src/constants/*"
-      ],
-      "@utils/*": [
-        "./src/utils/*"
-      ],
-      "@assets/*": [
-        "./src/assets/*"
-      ]
+      "@/*": ["./src/*"],
+      "@components/*": ["./src/components/*"],
+      "@screens/*": ["./src/screens/*"],
+      "@services/*": ["./src/services/*"],
+      "@navigation/*": ["./src/navigation/*"],
+      "@contexts/*": ["./src/contexts/*"],
+      "@types/*": ["./src/types/*"],
+      "@constants/*": ["./src/constants/*"],
+      "@utils/*": ["./src/utils/*"],
+      "@assets/*": ["./src/assets/*"]
     }
   },
-  "include": [
-    "**/*.ts",
-    "**/*.tsx"
-  ],
-  "exclude": [
-    "node_modules"
-  ]
+  "include": ["**/*.ts", "**/*.tsx"],
+  "exclude": ["node_modules"]
 }

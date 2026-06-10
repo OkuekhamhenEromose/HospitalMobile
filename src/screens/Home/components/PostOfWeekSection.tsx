@@ -10,9 +10,9 @@ import {
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 // import Button from "@components/common/Button";
-import { apiService } from "@/Services/api";
-import { COLORS, SIZES, SHADOWS } from "@constants/Theme";
-import type { BlogPost } from "@types/index";
+import { apiService } from "@/services/api";
+import { COLORS, SIZES, SHADOWS } from "@/constants/Theme";
+import type { BlogPost } from "@/types/index";
 
 interface PostOfWeekSectionProps {
   onPostClick?: (slug: string) => void;

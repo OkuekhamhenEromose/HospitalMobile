@@ -16,7 +16,7 @@ const BookAppointmentSection: React.FC<BookAppointmentSectionProps> = ({
         {/* Illustration */}
         <View style={styles.imageContainer}>
           <Image
-            source={require('@assets/images/consult-doctor.png')}
+            source={require('@assets/images/consult-doctor.jpg')}
             style={styles.image}
             resizeMode="contain"
           />

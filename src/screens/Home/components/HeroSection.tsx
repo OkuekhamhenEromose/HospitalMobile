@@ -29,7 +29,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({
   return (
     <View style={styles.container}>
       <ImageBackground
-        source={require('../../../assets/images/hero-doctor.jpg')}
+        source={require('../../../../assets/images/hero-doctor.jpg')}
         style={styles.backgroundImage}
         resizeMode="cover"
       >
