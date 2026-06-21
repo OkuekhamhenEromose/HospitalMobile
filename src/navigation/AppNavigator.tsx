@@ -9,7 +9,7 @@ import LoadingSpinner from '../components/common/LoadingSpinner';
 import HomeScreen from '../screens/Home/HomeScreen';
 import AboutScreen from '../screens/About/AboutScreen';
 import ServicesScreen from '../screens/Services/ServicesScreen';
-import PackagesScreen from '../screens/Packages/PackagesScreen';
+// import PackagesScreen from '../screens/Packages/PackagesScreen';
 import BlogListScreen from '../screens/Blog/BlogListScreen';
 import BlogDetailScreen from '../screens/Blog/BlogDetailScreen';
 import ContactScreen from '../screens/Contact/ContactScreen';
@@ -17,7 +17,7 @@ import DashboardScreen from '../screens/Dashboard/DashboardScreen';
 import LoginScreen from '../screens/Auth/LoginScreen';
 import RegisterScreen from '../screens/Auth/RegisterScreen';
 
-// import type { RootStackParamList, AuthStackParamList } from '../types/navigation';
+import type { RootStackParamList, AuthStackParamList } from '../types/navigation';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 const AuthStack = createNativeStackNavigator<AuthStackParamList>();
@@ -61,7 +61,7 @@ const MainTabs = () => {
       <Tab.Screen name="Home" component={HomeScreen} />
       <Tab.Screen name="About" component={AboutScreen} />
       <Tab.Screen name="Services" component={ServicesScreen} />
-      <Tab.Screen name="Packages" component={PackagesScreen} />
+      {/* <Tab.Screen name="Packages" component={PackagesScreen} /> */}
       <Tab.Screen name="Blog" component={BlogListScreen} />
       <Tab.Screen name="Contact" component={ContactScreen} />
       {/* Always render, hide tab button when logged out */}

@@ -149,7 +149,7 @@ const Footer: React.FC<FooterProps> = ({
 
       {/* WhatsApp Floating Button */}
       <TouchableOpacity style={styles.whatsappButton} activeOpacity={0.8}>
-        <MaterialIcons name="whatsapp" size={32} color={COLORS.white} />
+        <FontAwesome name="whatsapp" size={32} color={COLORS.white} />
       </TouchableOpacity>
     </LinearGradient>
   );
