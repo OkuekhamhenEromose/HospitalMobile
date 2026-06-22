@@ -11,7 +11,6 @@ import AboutScreen from '../screens/About/AboutScreen';
 import ServicesScreen from '../screens/Services/ServicesScreen';
 // import PackagesScreen from '../screens/Packages/PackagesScreen';
 import BlogListScreen from '../screens/Blog/BlogListScreen';
-import BlogDetailScreen from '../screens/Blog/BlogDetailScreen';
 import ContactScreen from '../screens/Contact/ContactScreen';
 import DashboardScreen from '../screens/Dashboard/DashboardScreen';
 import LoginScreen from '../screens/Auth/LoginScreen';
@@ -85,11 +84,11 @@ const AppNavigator = () => {
     <NavigationContainer>
       <Stack.Navigator screenOptions={{ headerShown: false }}>
         <Stack.Screen name="Main" component={MainTabs} />
-        <Stack.Screen
+        {/* <Stack.Screen
           name="BlogDetail"
           component={BlogDetailScreen}
           options={{ presentation: 'card', headerShown: true }}
-        />
+        /> */}
         <Stack.Screen
           name="Auth"
           component={AuthNavigator}
