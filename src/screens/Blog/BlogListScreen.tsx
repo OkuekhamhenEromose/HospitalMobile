@@ -37,7 +37,6 @@ const C = {
 const DOCTOR_IMG = require('../../../assets/images/hero-doctor.jpg');
 
 // ── MOCK DATA — no API needed ─────────────────────────────────────────────────
-// Replace with real API data later by swapping MOCK_POSTS with your fetchPosts()
 const MOCK_POSTS = [
   {
     id: '1',
@@ -81,8 +80,8 @@ const MOCK_POSTS = [
     image: DOCTOR_IMG,
     slug: 'diabetes-management',
     subheadings: [
-      { title: 'Blood sugar monitoring',       description: 'Daily home monitoring helps you understand how food and activity affect your glucose levels.' },
-      { title: 'Dietary recommendations',      description: 'Low glycaemic index foods, reduced refined carbs, and portion control are foundational.' },
+      { title: 'Blood sugar monitoring',         description: 'Daily home monitoring helps you understand how food and activity affect your glucose levels.' },
+      { title: 'Dietary recommendations',        description: 'Low glycaemic index foods, reduced refined carbs, and portion control are foundational.' },
       { title: 'Exercise & insulin sensitivity', description: 'Regular moderate exercise improves insulin sensitivity and reduces HbA1c.' },
     ],
   },
@@ -91,14 +90,14 @@ const MOCK_POSTS = [
     title: "Maternal Health: Antenatal Care at Etta-Atlantic",
     description:
       'Good antenatal care is the foundation of a safe pregnancy. Our obstetrics team provides comprehensive maternal healthcare from first trimester through delivery, ensuring the health of both mother and baby at every stage.',
-    category: 'Women\'s Health',
+    category: "Women's Health",
     date: 'May 28, 2026',
     readTime: '5 min read',
     image: DOCTOR_IMG,
     slug: 'maternal-health-antenatal',
     subheadings: [
-      { title: 'First trimester checks',       description: 'Early screening for gestational diabetes, anaemia, and foetal abnormalities.' },
-      { title: 'Nutrition during pregnancy',   description: 'Folic acid, iron, and calcium supplementation are essential in all trimesters.' },
+      { title: 'First trimester checks',     description: 'Early screening for gestational diabetes, anaemia, and foetal abnormalities.' },
+      { title: 'Nutrition during pregnancy', description: 'Folic acid, iron, and calcium supplementation are essential in all trimesters.' },
     ],
   },
   {
@@ -112,16 +111,16 @@ const MOCK_POSTS = [
     image: DOCTOR_IMG,
     slug: 'sickle-cell-disease-management',
     subheadings: [
-      { title: 'Vaso-occlusive crisis',        description: 'Pain crises require prompt hydration, analgesia, and oxygen therapy.' },
-      { title: 'Hydroxyurea therapy',          description: 'Evidence shows hydroxyurea reduces crisis frequency by up to 50%.' },
-      { title: 'Genetic counselling',          description: 'Carrier screening and counselling help families make informed reproductive decisions.' },
+      { title: 'Vaso-occlusive crisis',  description: 'Pain crises require prompt hydration, analgesia, and oxygen therapy.' },
+      { title: 'Hydroxyurea therapy',    description: 'Evidence shows hydroxyurea reduces crisis frequency by up to 50%.' },
+      { title: 'Genetic counselling',    description: 'Carrier screening and counselling help families make informed reproductive decisions.' },
     ],
   },
   {
     id: '6',
     title: 'Mental Wellness in the Workplace: Breaking the Stigma',
     description:
-      'Mental health challenges are rising in Lagos\'s fast-paced work environment. Anxiety, burnout, and depression are real and treatable conditions. Our team discusses practical strategies for managing mental wellness at work and at home.',
+      "Mental health challenges are rising in Lagos's fast-paced work environment. Anxiety, burnout, and depression are real and treatable conditions. Our team discusses practical strategies for managing mental wellness at work and at home.",
     category: 'Mental Wellness',
     date: 'May 12, 2026',
     readTime: '6 min read',
@@ -143,8 +142,8 @@ const MOCK_POSTS = [
     image: DOCTOR_IMG,
     slug: 'heart-health-cardiovascular-risk',
     subheadings: [
-      { title: 'Know your numbers',            description: 'Track blood pressure, cholesterol, blood sugar, and BMI regularly.' },
-      { title: 'The role of exercise',         description: '150 minutes of moderate aerobic activity per week is the minimum recommended dose.' },
+      { title: 'Know your numbers',  description: 'Track blood pressure, cholesterol, blood sugar, and BMI regularly.' },
+      { title: 'The role of exercise', description: '150 minutes of moderate aerobic activity per week is the minimum recommended dose.' },
     ],
   },
 ];
@@ -177,8 +176,12 @@ function sharePost(platform: string, post: typeof MOCK_POSTS[0]) {
 }
 
 const HERO_H   = 260;
-const FEATURED = MOCK_POSTS.slice(0, 3);   // first 3 in hero carousel
-const OTHERS   = MOCK_POSTS.slice(3);      // rest in recommended list
+const FEATURED = MOCK_POSTS.slice(0, 3);
+const OTHERS   = MOCK_POSTS.slice(3);
+
+// ── Card image dimensions (image LEFT, content RIGHT) ─────────────────────────
+const CARD_IMG_W = width * 0.32;
+const CARD_IMG_H = CARD_IMG_W * 1.18;   // slightly taller than wide
 
 // ─────────────────────────────────────────────────────────────────────────────
 interface BlogScreenProps { navigation?: any; }
@@ -195,12 +198,11 @@ export default function BlogScreen({ navigation }: BlogScreenProps) {
   const toggleExpand = (key: string) =>
     setExpanded(prev => ({ ...prev, [key]: !prev[key] }));
 
-  // Filter "others" by search + active category tab
   const filteredOthers = OTHERS.filter(p => {
-    const q    = search.toLowerCase();
-    const cat  = CATEGORIES[activeTab].label;
-    const matchSearch  = !q || p.title.toLowerCase().includes(q) || p.description.toLowerCase().includes(q);
-    const matchCat     = cat === 'All' || p.category === cat;
+    const q   = search.toLowerCase();
+    const cat = CATEGORIES[activeTab].label;
+    const matchSearch = !q || p.title.toLowerCase().includes(q) || p.description.toLowerCase().includes(q);
+    const matchCat    = cat === 'All' || p.category === cat;
     return matchSearch && matchCat;
   });
 
@@ -213,27 +215,20 @@ export default function BlogScreen({ navigation }: BlogScreenProps) {
       activeOpacity={0.95}
       onPress={() => navigation?.navigate?.('BlogPost', { post: item })}
     >
-      {/* Full-width doctor/blog image */}
       <Image source={item.image} style={h.img} resizeMode="cover" />
-
-      {/* Dark gradient overlay — author + title */}
       <View style={h.grad}>
-        {/* Author row */}
         <View style={h.authorRow}>
           <Image source={DOCTOR_IMG} style={h.avatar} resizeMode="cover" />
           <View>
             <Text style={h.authorName}>Etha-Atlantic</Text>
             <Text style={h.authorDate}>{item.date}</Text>
           </View>
-          {/* Category badge */}
           <View style={h.catBadge}>
             <Text style={h.catBadgeTxt}>{item.category}</Text>
           </View>
         </View>
         <Text style={h.title} numberOfLines={2}>{item.title}</Text>
       </View>
-
-      {/* Read-time pill bottom-right (Abeeshak rating pill pattern) */}
       <View style={h.timePill}>
         <Ionicons name="time-outline" size={11} color={C.white} />
         <Text style={h.timeTxt}>{item.readTime}</Text>
@@ -241,11 +236,11 @@ export default function BlogScreen({ navigation }: BlogScreenProps) {
     </TouchableOpacity>
   );
 
-  // ── Blog list card ──────────────────────────────────────────────────────────
+  // ── Blog list card — image LEFT, content RIGHT ──────────────────────────────
   const renderCard = ({ item }: { item: typeof MOCK_POSTS[0] }) => {
     const descKey = 'card_' + item.id;
     const isExp   = !!expanded[descKey];
-    const SHORT   = 110;
+    const SHORT   = 90;
     const isLong  = item.description.length > SHORT;
     const display = isExp || !isLong
       ? item.description
@@ -257,32 +252,29 @@ export default function BlogScreen({ navigation }: BlogScreenProps) {
         onPress={() => navigation?.navigate?.('BlogPost', { post: item })}
         activeOpacity={0.93}
       >
-        {/* Card image */}
+        {/* ── LEFT — image ── */}
         <View style={bc.imgWrap}>
           <Image source={item.image} style={bc.img} resizeMode="cover" />
 
-          {/* Category badge top-left */}
-          <View style={bc.badge}>
-            <Text style={bc.badgeTxt}>{item.category}</Text>
-          </View>
-
-          {/* Bookmark top-right */}
+          {/* Bookmark top-right corner of image */}
           <TouchableOpacity style={bc.bookmarkBtn} activeOpacity={0.8}>
-            <Ionicons name="bookmark-outline" size={15} color={C.white} />
+            <Ionicons name="bookmark-outline" size={13} color={C.white} />
           </TouchableOpacity>
 
-          {/* Date bottom-left overlay */}
-          <View style={bc.dateOverlay}>
-            <Ionicons name="calendar-outline" size={11} color="rgba(255,255,255,0.85)" />
-            <Text style={bc.dateTxt}>{item.date}</Text>
-            <View style={bc.sepDot} />
-            <Ionicons name="time-outline" size={11} color="rgba(255,255,255,0.85)" />
-            <Text style={bc.dateTxt}>{item.readTime}</Text>
+          {/* Read-time badge pinned to bottom of image */}
+          <View style={bc.timeBadge}>
+            <Ionicons name="time-outline" size={9} color={C.white} />
+            <Text style={bc.timeTxt}>{item.readTime}</Text>
           </View>
         </View>
 
-        {/* Card body */}
-        <View style={bc.body}>
+        {/* ── RIGHT — content ── */}
+        <View style={bc.content}>
+          {/* Category pill */}
+          <View style={bc.catBadge}>
+            <Text style={bc.catBadgeTxt}>{item.category}</Text>
+          </View>
+
           {/* Title */}
           <Text style={bc.title} numberOfLines={2}>{item.title}</Text>
 
@@ -297,33 +289,20 @@ export default function BlogScreen({ navigation }: BlogScreenProps) {
             )}
           </Text>
           {isExp && (
-            <TouchableOpacity onPress={() => toggleExpand(descKey)} style={{ marginTop: 4 }}>
+            <TouchableOpacity onPress={() => toggleExpand(descKey)} style={{ marginTop: 2 }}>
               <Text style={bc.readMoreLink}>Show less</Text>
             </TouchableOpacity>
           )}
 
-          {/* Subheadings preview (first one only) */}
-          {item.subheadings?.[0] && (
-            <View style={bc.subWrap}>
-              <Text style={bc.subTitle}>{item.subheadings[0].title}</Text>
-              <Text style={bc.subDesc} numberOfLines={2}>
-                {item.subheadings[0].description}
-              </Text>
-            </View>
-          )}
+          {/* Date row */}
+          <View style={bc.metaRow}>
+            <Ionicons name="calendar-outline" size={10} color={C.muted} />
+            <Text style={bc.metaTxt}>{item.date}</Text>
+          </View>
 
-          <View style={bc.sep} />
-
-          {/* Footer: Continue Reading + Share */}
+          {/* Footer: share buttons */}
           <View style={bc.footer}>
-            <TouchableOpacity
-              style={bc.ctaBtn}
-              onPress={() => navigation?.navigate?.('BlogPost', { post: item })}
-              activeOpacity={0.88}
-            >
-              <Text style={bc.ctaTxt}>CONTINUE READING</Text>
-            </TouchableOpacity>
-
+            <Text style={bc.shareLabel}>Share:</Text>
             <View style={bc.shareRow}>
               {SHARE_PLATFORMS.map(p => (
                 <TouchableOpacity
@@ -336,6 +315,14 @@ export default function BlogScreen({ navigation }: BlogScreenProps) {
                 </TouchableOpacity>
               ))}
             </View>
+            {/* Continue reading arrow */}
+            <TouchableOpacity
+              style={bc.arrowBtn}
+              onPress={() => navigation?.navigate?.('BlogPost', { post: item })}
+              activeOpacity={0.85}
+            >
+              <Ionicons name="arrow-forward" size={13} color={C.white} />
+            </TouchableOpacity>
           </View>
         </View>
       </TouchableOpacity>
@@ -378,8 +365,6 @@ export default function BlogScreen({ navigation }: BlogScreenProps) {
                 scrollEventThrottle={16}
                 renderItem={renderHeroSlide}
               />
-
-              {/* Dot indicators */}
               <View style={s.dotsRow}>
                 {FEATURED.map((_, i) => (
                   <View key={i} style={[s.dot, i === heroIndex ? s.dotOn : s.dotOff]} />
@@ -387,19 +372,16 @@ export default function BlogScreen({ navigation }: BlogScreenProps) {
               </View>
             </View>
 
-            {/* Featured brief card (web Blog.tsx description + CTA) */}
+            {/* Featured brief card */}
             <View style={s.briefCard}>
-              {/* Category tag + red underline (web Blog.tsx pattern) */}
               <View style={s.catTagRow}>
                 <MaterialIcons name="grid-view" size={13} color={C.muted} />
                 <Text style={s.catTagTxt}>{featuredPost.category}</Text>
                 <View style={s.catTagLine} />
               </View>
 
-              {/* Featured title */}
               <Text style={s.briefTitle}>{featuredPost.title}</Text>
 
-              {/* Brief description with Read More */}
               {(() => {
                 const key    = 'hero_' + featuredPost.id;
                 const isExp  = !!expanded[key];
@@ -419,7 +401,6 @@ export default function BlogScreen({ navigation }: BlogScreenProps) {
                 );
               })()}
 
-              {/* Subheadings TOC preview */}
               {featuredPost.subheadings?.slice(0, 2).map((sub, si) => (
                 <View key={si} style={s.tocRow}>
                   <View style={s.tocBullet} />
@@ -430,7 +411,6 @@ export default function BlogScreen({ navigation }: BlogScreenProps) {
                 </View>
               ))}
 
-              {/* CTA */}
               <TouchableOpacity
                 style={s.briefCta}
                 onPress={() => navigation?.navigate?.('BlogPost', { post: featuredPost })}
@@ -440,7 +420,6 @@ export default function BlogScreen({ navigation }: BlogScreenProps) {
                 <Ionicons name="arrow-forward" size={14} color={C.white} />
               </TouchableOpacity>
 
-              {/* Share row (web Blog.tsx share buttons) */}
               <View style={s.heroShareRow}>
                 <Text style={s.heroShareLabel}>Share:</Text>
                 {SHARE_PLATFORMS.map(p => (
@@ -460,7 +439,6 @@ export default function BlogScreen({ navigation }: BlogScreenProps) {
                 SECTION 2 — Search + Category tabs
             ══════════════════════════════════════════ */}
             <View style={s.searchOuter}>
-              {/* Search bar (screenshot Airbnb "Where to?" style) */}
               <View style={s.searchBar}>
                 <Ionicons name="search-outline" size={17} color={C.muted} />
                 <TextInput
@@ -481,7 +459,6 @@ export default function BlogScreen({ navigation }: BlogScreenProps) {
                 </View>
               </View>
 
-              {/* Category tabs (screenshot horizontal scroll) */}
               <ScrollView
                 horizontal
                 showsHorizontalScrollIndicator={false}
@@ -516,7 +493,6 @@ export default function BlogScreen({ navigation }: BlogScreenProps) {
               <Text style={s.recCount}>{filteredOthers.length} posts</Text>
             </View>
 
-            {/* Empty state */}
             {filteredOthers.length === 0 && (
               <View style={s.empty}>
                 <Text style={{ fontSize: 38 }}>🔍</Text>
@@ -533,6 +509,7 @@ export default function BlogScreen({ navigation }: BlogScreenProps) {
           </>
         )}
         renderItem={renderCard}
+        ItemSeparatorComponent={() => <View style={{ height: 12 }} />}
       />
     </View>
   );
@@ -540,8 +517,8 @@ export default function BlogScreen({ navigation }: BlogScreenProps) {
 
 // ── Hero slide styles ─────────────────────────────────────────────────────────
 const h = StyleSheet.create({
-  slide:     { width, height: HERO_H, position: 'relative' },
-  img:       { width: '100%', height: '100%' },
+  slide:      { width, height: HERO_H, position: 'relative' },
+  img:        { width: '100%', height: '100%' },
   grad: {
     position: 'absolute', bottom: 0, left: 0, right: 0,
     backgroundColor: 'rgba(17,24,39,0.76)', padding: 16,
@@ -566,89 +543,104 @@ const h = StyleSheet.create({
   timeTxt: { color: C.white, fontSize: 10, fontWeight: '600' },
 });
 
-// ── Blog card styles ──────────────────────────────────────────────────────────
+// ── Blog card styles — image LEFT, content RIGHT ──────────────────────────────
 const bc = StyleSheet.create({
   card: {
+    flexDirection: 'row',                   // ← horizontal layout
     backgroundColor: C.white,
-    marginHorizontal: 16, marginBottom: 18,
-    borderRadius: 20, overflow: 'hidden',
-    shadowColor: '#000', shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.08, shadowRadius: 10, elevation: 3,
+    marginHorizontal: 16,
+    borderRadius: 18,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.07,
+    shadowRadius: 8,
+    elevation: 3,
   },
-  imgWrap:    { width: '100%', height: 185, position: 'relative' },
-  img:        { width: '100%', height: '100%' },
 
-  badge: {
-    position: 'absolute', top: 12, left: 12,
-    backgroundColor: 'rgba(19,120,229,0.88)',
-    paddingHorizontal: 10, paddingVertical: 4, borderRadius: 20,
+  // ── LEFT — image ──────────────────────────────────────────────────────────
+  imgWrap: {
+    width: CARD_IMG_W,
+    height: CARD_IMG_H,
+    position: 'relative',
   },
-  badgeTxt: { color: C.white, fontSize: 9, fontWeight: '800' },
+  img: { width: '100%', height: '100%' },
 
   bookmarkBtn: {
-    position: 'absolute', top: 10, right: 10,
-    width: 30, height: 30, borderRadius: 15,
+    position: 'absolute', top: 8, right: 8,
+    width: 24, height: 24, borderRadius: 12,
     backgroundColor: 'rgba(0,0,0,0.38)',
     justifyContent: 'center', alignItems: 'center',
   },
 
-  dateOverlay: {
+  timeBadge: {
     position: 'absolute', bottom: 0, left: 0, right: 0,
-    flexDirection: 'row', alignItems: 'center', gap: 4,
-    backgroundColor: 'rgba(0,0,0,0.45)',
-    paddingHorizontal: 12, paddingVertical: 7,
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 3,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    paddingVertical: 4,
   },
-  dateTxt:  { color: 'rgba(255,255,255,0.9)', fontSize: 10, fontWeight: '500' },
-  sepDot:   { width: 3, height: 3, borderRadius: 2, backgroundColor: 'rgba(255,255,255,0.5)', marginHorizontal: 2 },
+  timeTxt: { color: C.white, fontSize: 9, fontWeight: '700' },
 
-  body:  { padding: 14 },
-  title: { fontSize: 15, fontWeight: '800', color: C.text, lineHeight: 21, marginBottom: 8 },
-  desc:  { fontSize: 13, color: C.sub, lineHeight: 20, marginBottom: 6 },
-  readMoreLink: { color: C.primary, fontWeight: '700', fontSize: 13 },
-
-  subWrap: {
-    backgroundColor: C.bg, borderRadius: 10,
-    padding: 10, marginTop: 8, marginBottom: 4,
-    borderLeftWidth: 3, borderLeftColor: C.primary,
+  // ── RIGHT — content ───────────────────────────────────────────────────────
+  content: {
+    flex: 1,
+    padding: 11,
+    justifyContent: 'space-between',
   },
-  subTitle: { fontSize: 12, fontWeight: '700', color: C.text, marginBottom: 3 },
-  subDesc:  { fontSize: 11, color: C.sub, lineHeight: 16 },
 
-  sep:      { height: 1, backgroundColor: C.border, marginVertical: 12 },
-  footer:   { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-
-  ctaBtn: {
-    backgroundColor: C.primary, borderRadius: 50,
-    paddingHorizontal: 16, paddingVertical: 9,
+  catBadge: {
+    alignSelf: 'flex-start',
+    backgroundColor: '#eff6ff',
+    borderRadius: 20, paddingHorizontal: 8, paddingVertical: 3,
+    marginBottom: 5,
   },
-  ctaTxt: { color: C.white, fontSize: 10, fontWeight: '800', letterSpacing: 0.5 },
+  catBadgeTxt: { color: C.primary, fontSize: 8, fontWeight: '800' },
 
-  shareRow: { flexDirection: 'row', gap: 6 },
+  title: {
+    fontSize: 12,
+    fontWeight: '800',
+    color: C.text,
+    lineHeight: 17,
+    marginBottom: 5,
+  },
+
+  desc:         { fontSize: 10, color: C.sub, lineHeight: 15, marginBottom: 5, flexShrink: 1 },
+  readMoreLink: { color: C.primary, fontWeight: '700', fontSize: 10 },
+
+  metaRow:  { flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: 7 },
+  metaTxt:  { fontSize: 10, color: C.muted },
+
+  footer:     { flexDirection: 'row', alignItems: 'center', gap: 5 },
+  shareLabel: { fontSize: 9, color: C.muted, fontWeight: '600' },
+  shareRow:   { flexDirection: 'row', gap: 4, flex: 1 },
   shareBtn: {
-    width: 30, height: 30, borderRadius: 15,
-    borderWidth: 1.5, borderColor: C.primary,
+    width: 22, height: 22, borderRadius: 11,
+    borderWidth: 1.2, borderColor: C.primary,
     justifyContent: 'center', alignItems: 'center',
   },
-  shareTxt: { color: C.primary, fontSize: 10, fontWeight: '800' },
+  shareTxt: { color: C.primary, fontSize: 8, fontWeight: '800' },
+
+  arrowBtn: {
+    width: 26, height: 26, borderRadius: 13,
+    backgroundColor: C.primary,
+    justifyContent: 'center', alignItems: 'center',
+  },
 });
 
 // ── Root styles ───────────────────────────────────────────────────────────────
 const s = StyleSheet.create({
   root: { flex: 1, backgroundColor: C.bg },
 
-  // Top bar
-  topBar:    { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingBottom: 10, backgroundColor: C.white, borderBottomWidth: 1, borderBottomColor: C.border },
-  iconBtn:   { width: 38, height: 38, borderRadius: 19, backgroundColor: C.bg, justifyContent: 'center', alignItems: 'center' },
-  topTitle:  { fontSize: 17, fontWeight: '700', color: C.text },
+  topBar:   { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingBottom: 10, backgroundColor: C.white, borderBottomWidth: 1, borderBottomColor: C.border },
+  iconBtn:  { width: 38, height: 38, borderRadius: 19, backgroundColor: C.bg, justifyContent: 'center', alignItems: 'center' },
+  topTitle: { fontSize: 17, fontWeight: '700', color: C.text },
 
-  // Hero
-  heroWrap:  { backgroundColor: C.dark },
-  dotsRow:   { flexDirection: 'row', justifyContent: 'center', gap: 5, paddingVertical: 10, backgroundColor: C.dark },
-  dot:       { height: 6, borderRadius: 3 },
-  dotOn:     { width: 18, backgroundColor: C.white },
-  dotOff:    { width: 6,  backgroundColor: 'rgba(255,255,255,0.3)' },
+  heroWrap: { backgroundColor: C.dark },
+  dotsRow:  { flexDirection: 'row', justifyContent: 'center', gap: 5, paddingVertical: 10, backgroundColor: C.dark },
+  dot:      { height: 6, borderRadius: 3 },
+  dotOn:    { width: 18, backgroundColor: C.white },
+  dotOff:   { width: 6,  backgroundColor: 'rgba(255,255,255,0.3)' },
 
-  // Brief card (featured post description section)
   briefCard: {
     backgroundColor: C.white,
     marginHorizontal: 16, marginTop: 16,
@@ -679,8 +671,8 @@ const s = StyleSheet.create({
   },
   briefCtaTxt: { color: C.white, fontSize: 11, fontWeight: '800', letterSpacing: 0.5 },
 
-  heroShareRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  heroShareLabel:{ fontSize: 12, color: C.muted, fontWeight: '600' },
+  heroShareRow:   { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  heroShareLabel: { fontSize: 12, color: C.muted, fontWeight: '600' },
   heroShareBtn: {
     width: 30, height: 30, borderRadius: 15,
     borderWidth: 1.5, borderColor: C.primary,
@@ -688,7 +680,6 @@ const s = StyleSheet.create({
   },
   heroShareTxt: { color: C.primary, fontSize: 10, fontWeight: '800' },
 
-  // Search
   searchOuter: { paddingHorizontal: 16, paddingTop: 16, paddingBottom: 4 },
   searchBar: {
     flexDirection: 'row', alignItems: 'center', gap: 10,
@@ -704,24 +695,21 @@ const s = StyleSheet.create({
     justifyContent: 'center', alignItems: 'center',
   },
 
-  // Tabs
-  tabsRow:   { paddingRight: 4, gap: 8 },
+  tabsRow: { paddingRight: 4, gap: 8 },
   tab: {
     flexDirection: 'row', alignItems: 'center', gap: 5,
     paddingHorizontal: 13, paddingVertical: 8,
     borderRadius: 50, borderWidth: 1.5, borderColor: C.border,
     backgroundColor: C.white,
   },
-  tabOn:     { backgroundColor: C.primary, borderColor: C.primary },
-  tabTxt:    { fontSize: 11, fontWeight: '600', color: C.sub },
-  tabTxtOn:  { color: C.white },
+  tabOn:    { backgroundColor: C.primary, borderColor: C.primary },
+  tabTxt:   { fontSize: 11, fontWeight: '600', color: C.sub },
+  tabTxtOn: { color: C.white },
 
-  // Recommended header
   recHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 16, paddingTop: 18, paddingBottom: 12 },
   recTitle:  { fontSize: 17, fontWeight: '800', color: C.text },
   recCount:  { fontSize: 12, color: C.muted, fontWeight: '500' },
 
-  // Empty state
   empty:       { alignItems: 'center', paddingVertical: 40, paddingHorizontal: 32 },
   emptyTitle:  { fontSize: 17, fontWeight: '700', color: C.text, marginTop: 10 },
   emptySub:    { fontSize: 13, color: C.muted, marginTop: 4, marginBottom: 16, textAlign: 'center' },
