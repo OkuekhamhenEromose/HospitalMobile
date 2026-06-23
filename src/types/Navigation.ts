@@ -1,23 +1,27 @@
 import type { NavigatorScreenParams } from '@react-navigation/native';
 
+// ── Root stack: Welcome → Auth (modal) → Main (tabs) ─────────────────────────
 export type RootStackParamList = {
-  Main: NavigatorScreenParams<MainDrawerParamList>;
-  Auth: NavigatorScreenParams<AuthStackParamList>;
+  Welcome:    undefined;
+  Main:       NavigatorScreenParams<MainTabParamList>;
+  Auth:       NavigatorScreenParams<AuthStackParamList>;
   BlogDetail: { slug: string };
 };
 
-export type MainDrawerParamList = {
-  Home: undefined;
-  About: undefined;
-  Services: undefined;
-  Packages: undefined;
-  Blog: undefined;
-  Contact: undefined;
+// ── Bottom tab screens ────────────────────────────────────────────────────────
+export type MainTabParamList = {
+  Home:      undefined;
+  About:     undefined;
+  Services:  undefined;
+  Packages:  undefined;
+  Blog:      undefined;
+  Contact:   undefined;
   Dashboard: undefined;
 };
 
+// ── Auth stack ────────────────────────────────────────────────────────────────
 export type AuthStackParamList = {
-  Login: undefined;
+  Login:    undefined;
   Register: undefined;
 };
 
