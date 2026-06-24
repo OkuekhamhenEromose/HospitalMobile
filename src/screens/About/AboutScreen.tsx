@@ -1,6 +1,6 @@
 // src/screens/About/AboutScreen.tsx
 
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   View,
   Text,
@@ -9,54 +9,93 @@ import {
   ScrollView,
   TouchableOpacity,
   Dimensions,
-} from 'react-native';
-import { MaterialIcons, Ionicons } from '@expo/vector-icons';
-import Svg, { Path } from 'react-native-svg';
-import { SafeAreaView } from 'react-native-safe-area-context';
+} from "react-native";
+import { MaterialIcons, Ionicons } from "@expo/vector-icons";
+import Svg, { Path } from "react-native-svg";
+import { SafeAreaView } from "react-native-safe-area-context";
 
-const { width } = Dimensions.get('window');
+const { width } = Dimensions.get("window");
 
 // ── Colours ──────────────────────────────────────────────────────────────────
 const C = {
-  primary:   '#1378e5',
-  secondary: '#177fed',
-  red:       '#ef4444',
-  white:     '#ffffff',
-  bg:        '#f5f8ff',
-  text:      '#1a2340',
-  sub:       '#5a6a85',
-  muted:     '#8898aa',
-  star:      '#f59e0b',
-  dark:      '#111827',
-  border:    '#e2eaf5',
+  primary: "#1378e5",
+  secondary: "#177fed",
+  red: "#ef4444",
+  white: "#ffffff",
+  bg: "#f5f8ff",
+  text: "#1a2340",
+  sub: "#5a6a85",
+  muted: "#8898aa",
+  star: "#f59e0b",
+  dark: "#111827",
+  border: "#e2eaf5",
 };
 
 // ── Tabs ─────────────────────────────────────────────────────────────────────
-const TABS = ['About', 'Details'];
+const TABS = ["About", "Details"];
 
 // ── Hero image (static) ───────────────────────────────────────────────────────
-const HERO_IMAGE = require('../../../assets/images/hospitaldoctor6.png');
+const HERO_IMAGE = require("../../../assets/images/hospitaldoctor6.png");
 
 // ── Stat pills ────────────────────────────────────────────────────────────────
 const STAT_PILLS = [
-  { icon: 'access-time',    label: 'Open 24/7'  },
-  { icon: 'local-hospital', label: 'Specialist' },
-  { icon: 'star',           label: '4.9'        },
+  { icon: "access-time", label: "Open 24/7" },
+  { icon: "local-hospital", label: "Specialist" },
+  { icon: "star", label: "4.9" },
 ];
 
 // ── Feature cards ─────────────────────────────────────────────────────────────
 const FEATURE_CARDS = [
-  { title: 'Professional Team',   icon: 'people',         desc: 'Highly qualified physicians and health professionals providing excellent care.',     bg: C.primary   },
-  { title: 'Advanced Technology', icon: 'devices',        desc: 'Electronic medical records and telemedicine for fast, quality healthcare delivery.', bg: C.secondary },
-  { title: 'Great Facilities',    icon: 'local-hospital', desc: 'World-class equipment: BiPAP, CTG, ultrasound, ECG, cardiac monitors and more.',    bg: C.red       },
+  {
+    title: "Professional Team",
+    icon: "people",
+    desc: "Highly qualified physicians and health professionals providing excellent care.",
+    bg: C.primary,
+  },
+  {
+    title: "Advanced Technology",
+    icon: "devices",
+    desc: "Electronic medical records and telemedicine for fast, quality healthcare delivery.",
+    bg: C.secondary,
+  },
+  {
+    title: "Great Facilities",
+    icon: "local-hospital",
+    desc: "World-class equipment: BiPAP, CTG, ultrasound, ECG, cardiac monitors and more.",
+    bg: C.red,
+  },
 ];
 
 // ── Doctors list ──────────────────────────────────────────────────────────────
 const DOCTORS = [
-  { name: 'Dr. Chidi Okonkwo',  role: 'Senior Surgeon',          hours: '8:00 AM–4:00 PM', fee: '$20', rating: 4.9 },
-  { name: 'Dr. Amaka Nwosu',    role: 'Consultant Physician',    hours: '9:00 AM–5:00 PM', fee: '$15', rating: 5.0 },
-  { name: 'Dr. Emeka Eze',      role: 'Cardiologist',            hours: '7:30 AM–3:30 PM', fee: '$25', rating: 4.8 },
-  { name: 'Dr. Ngozi Adeyemi',  role: 'Obstetrics & Gynecology', hours: '8:00 AM–4:00 PM', fee: '$18', rating: 4.7 },
+  {
+    name: "Dr. Chidi Okonkwo",
+    role: "Senior Surgeon",
+    hours: "8:00 AM–4:00 PM",
+    fee: "$20",
+    rating: 4.9,
+  },
+  {
+    name: "Dr. Amaka Nwosu",
+    role: "Consultant Physician",
+    hours: "9:00 AM–5:00 PM",
+    fee: "$15",
+    rating: 5.0,
+  },
+  {
+    name: "Dr. Emeka Eze",
+    role: "Cardiologist",
+    hours: "7:30 AM–3:30 PM",
+    fee: "$25",
+    rating: 4.8,
+  },
+  {
+    name: "Dr. Ngozi Adeyemi",
+    role: "Obstetrics & Gynecology",
+    hours: "8:00 AM–4:00 PM",
+    fee: "$18",
+    rating: 4.7,
+  },
 ];
 
 // ── SVG icons (identical copies from HomeScreen) ──────────────────────────────
@@ -113,22 +152,19 @@ export default function AboutScreen({ navigation }: AboutScreenProps) {
   return (
     <View style={styles.root}>
       <ScrollView showsVerticalScrollIndicator={false} bounces={false}>
-
         {/* ══════════════════════════════════════════════════════════
             HERO IMAGE — single static image, no carousel
         ══════════════════════════════════════════════════════════ */}
         <SafeAreaView style={styles.heroSafeArea}>
-          <View>
-            <View style={styles.heroSlide}>
-              <Image source={HERO_IMAGE} style={styles.heroImage} resizeMode="cover" />
-            </View>
+          <View style={styles.heroContainer}>
+            <Image
+              source={HERO_IMAGE}
+              style={styles.heroImage}
+              resizeMode="contain"
+            />
 
-            {/* ── Overlay: SignOut (left) │ Notification + Profile (right) ──
-                Pixel-perfect match to HomeScreen's heroOverlay layout        */}
             <View style={styles.heroOverlay}>
               <View style={styles.heroOverlayRow}>
-
-                {/* LEFT — sign out */}
                 <TouchableOpacity
                   style={styles.iconBtn}
                   onPress={() => navigation?.goBack?.()}
@@ -137,25 +173,21 @@ export default function AboutScreen({ navigation }: AboutScreenProps) {
                   <SignOutIcon color={C.text} />
                 </TouchableOpacity>
 
-                {/* RIGHT — notification + profile */}
                 <View style={styles.rightIconsRow}>
                   <TouchableOpacity
                     style={styles.iconBtn}
-                    onPress={() => navigate('Notifications')}
-                    activeOpacity={0.7}
+                    onPress={() => navigate("Notifications")}
                   >
                     <NotificationIcon color={C.text} />
                   </TouchableOpacity>
 
                   <TouchableOpacity
                     style={styles.iconBtn}
-                    onPress={() => navigate('Profile')}
-                    activeOpacity={0.7}
+                    onPress={() => navigate("Profile")}
                   >
                     <ProfileIcon color={C.text} />
                   </TouchableOpacity>
                 </View>
-
               </View>
             </View>
           </View>
@@ -166,7 +198,6 @@ export default function AboutScreen({ navigation }: AboutScreenProps) {
             CONTENT AREA
         ══════════════════════════════════════════════════════════ */}
         <View style={styles.content}>
-
           {/* ── Tabs ── */}
           <View style={styles.tabRow}>
             {TABS.map((tab, i) => (
@@ -176,7 +207,12 @@ export default function AboutScreen({ navigation }: AboutScreenProps) {
                 onPress={() => setActiveTab(i)}
                 activeOpacity={0.7}
               >
-                <Text style={[styles.tabText, i === activeTab && styles.tabTextActive]}>
+                <Text
+                  style={[
+                    styles.tabText,
+                    i === activeTab && styles.tabTextActive,
+                  ]}
+                >
                   {tab}
                 </Text>
                 {i === activeTab && <View style={styles.tabUnderline} />}
@@ -203,14 +239,14 @@ export default function AboutScreen({ navigation }: AboutScreenProps) {
               <View style={styles.sectionDivider} />
 
               <Text style={styles.body}>
-                Etta-Atlantic Memorial Hospital Lekki stands as the premier private
-                hospital in Lekki, Lagos. Our foundation was laid with the singular
-                purpose of delivering world-class healthcare to the community of Lagos
-                and the broader Nigerian populace.{' '}
+                Etta-Atlantic Memorial Hospital Lekki stands as the premier
+                private hospital in Lekki, Lagos. Our foundation was laid with
+                the singular purpose of delivering world-class healthcare to the
+                community of Lagos and the broader Nigerian populace.{" "}
                 <Text style={styles.bodyMuted}>
-                  Established by a physician with medical training and experience in
-                  the US, teamed with bright and dedicated Nigerian physicians and
-                  allied health professionals.
+                  Established by a physician with medical training and
+                  experience in the US, teamed with bright and dedicated
+                  Nigerian physicians and allied health professionals.
                 </Text>
               </Text>
 
@@ -222,30 +258,42 @@ export default function AboutScreen({ navigation }: AboutScreenProps) {
                 <View style={{ flex: 1 }}>
                   <Text style={styles.missionTitle}>Our Mission</Text>
                   <Text style={styles.missionBody}>
-                    To provide world-class healthcare services to the community of Lagos
-                    and the broader Nigerian populace, upholding the highest standards of
-                    medical excellence and patient care.
+                    To provide world-class healthcare services to the community
+                    of Lagos and the broader Nigerian populace, upholding the
+                    highest standards of medical excellence and patient care.
                   </Text>
                 </View>
               </View>
 
               {/* ── Vision ── */}
-              <View style={[styles.missionCard, { backgroundColor: '#fff5f5' }]}>
-                <View style={[styles.missionIconWrap, { backgroundColor: '#fee2e2' }]}>
+              <View
+                style={[styles.missionCard, { backgroundColor: "#fff5f5" }]}
+              >
+                <View
+                  style={[
+                    styles.missionIconWrap,
+                    { backgroundColor: "#fee2e2" },
+                  ]}
+                >
                   <MaterialIcons name="visibility" size={22} color={C.red} />
                 </View>
                 <View style={{ flex: 1 }}>
-                  <Text style={[styles.missionTitle, { color: C.red }]}>Our Vision</Text>
+                  <Text style={[styles.missionTitle, { color: C.red }]}>
+                    Our Vision
+                  </Text>
                   <Text style={styles.missionBody}>
-                    To be the leading private healthcare institution in West Africa,
-                    recognised for our commitment to evidence-based medicine, advanced
-                    technology, and compassionate patient care.
+                    To be the leading private healthcare institution in West
+                    Africa, recognised for our commitment to evidence-based
+                    medicine, advanced technology, and compassionate patient
+                    care.
                   </Text>
                 </View>
               </View>
 
               {/* ── Why Choose Us ── */}
-              <Text style={[styles.sectionHeading, { marginTop: 20 }]}>Why Choose Us</Text>
+              <Text style={[styles.sectionHeading, { marginTop: 20 }]}>
+                Why Choose Us
+              </Text>
               <View style={styles.sectionDivider} />
 
               <ScrollView
@@ -255,8 +303,15 @@ export default function AboutScreen({ navigation }: AboutScreenProps) {
                 style={{ marginTop: 12 }}
               >
                 {FEATURE_CARDS.map((card, i) => (
-                  <View key={i} style={[styles.featureCard, { backgroundColor: card.bg }]}>
-                    <MaterialIcons name={card.icon as any} size={26} color={C.white} />
+                  <View
+                    key={i}
+                    style={[styles.featureCard, { backgroundColor: card.bg }]}
+                  >
+                    <MaterialIcons
+                      name={card.icon as any}
+                      size={26}
+                      color={C.white}
+                    />
                     <Text style={styles.featureCardTitle}>{card.title}</Text>
                     <Text style={styles.featureCardDesc}>{card.desc}</Text>
                   </View>
@@ -264,13 +319,15 @@ export default function AboutScreen({ navigation }: AboutScreenProps) {
               </ScrollView>
 
               {/* ── Top Doctors ── */}
-              <Text style={[styles.sectionHeading, { marginTop: 24 }]}>Top Doctors</Text>
+              <Text style={[styles.sectionHeading, { marginTop: 24 }]}>
+                Top Doctors
+              </Text>
               <View style={styles.sectionDivider} />
 
               {DOCTORS.map((doc, i) => (
                 <View key={i} style={styles.doctorCard}>
                   <Image
-                    source={require('../../../assets/images/hospitaldoctor6.png')}
+                    source={require("../../../assets/images/hospitaldoctor6.png")}
                     style={styles.doctorAvatar}
                     resizeMode="cover"
                   />
@@ -291,7 +348,7 @@ export default function AboutScreen({ navigation }: AboutScreenProps) {
                   </View>
                   <TouchableOpacity
                     style={styles.arrowBtn}
-                    onPress={() => navigate('Book')}
+                    onPress={() => navigate("Book")}
                     activeOpacity={0.85}
                   >
                     <Ionicons name="arrow-forward" size={18} color={C.white} />
@@ -303,12 +360,12 @@ export default function AboutScreen({ navigation }: AboutScreenProps) {
             /* ── Details tab ── */
             <View style={styles.detailsTab}>
               {[
-                { label: 'Location',    value: 'Ikate Lekki, Lagos, Nigeria' },
-                { label: 'Phone',       value: '+234 800 000 0000'           },
-                { label: 'Email',       value: 'info@ettaatlantic.com'       },
-                { label: 'Hours',       value: '24 hours, 7 days a week'     },
-                { label: 'Founded',     value: '2018'                        },
-                { label: 'Accredited',  value: 'WHO Standards Compliant'     },
+                { label: "Location", value: "Ikate Lekki, Lagos, Nigeria" },
+                { label: "Phone", value: "+234 800 000 0000" },
+                { label: "Email", value: "info@ettaatlantic.com" },
+                { label: "Hours", value: "24 hours, 7 days a week" },
+                { label: "Founded", value: "2018" },
+                { label: "Accredited", value: "WHO Standards Compliant" },
               ].map((row, i) => (
                 <View key={i} style={styles.detailRow}>
                   <Text style={styles.detailLabel}>{row.label}</Text>
@@ -327,11 +384,16 @@ export default function AboutScreen({ navigation }: AboutScreenProps) {
       <View style={styles.stickyBar}>
         <TouchableOpacity
           style={styles.bookBtn}
-          onPress={() => navigate('Book')}
+          onPress={() => navigate("Book")}
           activeOpacity={0.88}
         >
           <Text style={styles.bookBtnText}>Book Appointment</Text>
-          <Ionicons name="navigate-outline" size={18} color={C.white} style={{ marginLeft: 8 }} />
+          <Ionicons
+            name="navigate-outline"
+            size={18}
+            color={C.white}
+            style={{ marginLeft: 8 }}
+          />
         </TouchableOpacity>
       </View>
     </View>
@@ -344,121 +406,224 @@ const styles = StyleSheet.create({
 
   // ── Hero ─────────────────────────────────────────────────────────────────
   heroSafeArea: {
-    // no background — image renders edge-to-edge with no colour bleed
+    backgroundColor: C.white,
   },
-  heroSlide: {
-    width,
-    overflow: 'hidden',
-    paddingTop: 56,   // clears the floating icon row
+
+  heroContainer: {
+    width: "100%",
+    alignItems: "center",
+    paddingTop: 55,
+    paddingBottom: 10,
+    backgroundColor: C.white,
   },
-  heroImage: { width, height: 396 }, // 340 visible + 56 offset
+
+  heroImage: {
+    width: width * 0.9,
+    height: 400,
+  },
+  // 340 visible + 56 offset
 
   // Overlay sits at absolute top-left, same as HomeScreen
-  heroOverlay: { position: 'absolute', top: 0, left: 0, right: 0 },
+  heroOverlay: { position: "absolute", top: 0, left: 0, right: 0 },
   heroOverlayRow: {
-    flexDirection: 'row', justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 16, paddingTop: 6,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingHorizontal: 16,
+    paddingTop: 6,
   },
-  rightIconsRow: { flexDirection: 'row', gap: 8 },
-  iconBtn: {               // bare — no background, shadow, or elevation (same as HomeScreen)
+  rightIconsRow: { flexDirection: "row", gap: 8 },
+  iconBtn: {
+    // bare — no background, shadow, or elevation (same as HomeScreen)
     width: 40,
     height: 40,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
 
   // ── Content ───────────────────────────────────────────────────────────────
-  content: { paddingHorizontal: 20, paddingTop: 18 },
+  content: {
+  paddingHorizontal: 20,
+  paddingTop: 0,
+},
 
-  tabRow:        { flexDirection: 'row', gap: 24, marginBottom: 16 },
-  tabItem:       { alignItems: 'center', paddingBottom: 4 },
-  tabText:       { fontSize: 15, color: C.muted, fontWeight: '500' },
-  tabTextActive: { color: C.text, fontWeight: '700' },
-  tabUnderline:  { height: 3, width: '100%', borderRadius: 2, backgroundColor: C.text, marginTop: 4 },
+  tabRow: { flexDirection: "row", gap: 24, marginBottom: 16 },
+  tabItem: { alignItems: "center", paddingBottom: 4 },
+  tabText: { fontSize: 15, color: C.muted, fontWeight: "500" },
+  tabTextActive: { color: C.text, fontWeight: "700" },
+  tabUnderline: {
+    height: 3,
+    width: "100%",
+    borderRadius: 2,
+    backgroundColor: C.text,
+    marginTop: 4,
+  },
 
-  pillRow: { flexDirection: 'row', gap: 12, marginBottom: 18 },
+  pillRow: { flexDirection: "row", gap: 12, marginBottom: 18 },
   pill: {
-    flexDirection: 'row', alignItems: 'center', gap: 5,
-    backgroundColor: '#f3f4f6',
-    paddingHorizontal: 10, paddingVertical: 6,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+    backgroundColor: "#f3f4f6",
+    paddingHorizontal: 10,
+    paddingVertical: 6,
     borderRadius: 20,
   },
-  pillText: { fontSize: 12, color: C.text, fontWeight: '500' },
+  pillText: { fontSize: 12, color: C.text, fontWeight: "500" },
 
-  sectionHeading: { fontSize: 16, fontWeight: '800', color: C.text, marginBottom: 6 },
-  sectionDivider: { width: 36, height: 3, backgroundColor: C.primary, borderRadius: 2, marginBottom: 12 },
-  body:           { fontSize: 13, color: C.text, lineHeight: 21, marginBottom: 14 },
-  bodyMuted:      { color: C.sub },
+  sectionHeading: {
+    fontSize: 16,
+    fontWeight: "800",
+    color: C.text,
+    marginBottom: 6,
+  },
+  sectionDivider: {
+    width: 36,
+    height: 3,
+    backgroundColor: C.primary,
+    borderRadius: 2,
+    marginBottom: 12,
+  },
+  body: { fontSize: 13, color: C.text, lineHeight: 21, marginBottom: 14 },
+  bodyMuted: { color: C.sub },
 
   missionCard: {
-    flexDirection: 'row', gap: 12, alignItems: 'flex-start',
-    backgroundColor: '#eff6ff',
-    borderRadius: 14, padding: 14, marginBottom: 12,
+    flexDirection: "row",
+    gap: 12,
+    alignItems: "flex-start",
+    backgroundColor: "#eff6ff",
+    borderRadius: 14,
+    padding: 14,
+    marginBottom: 12,
   },
   missionIconWrap: {
-    width: 42, height: 42, borderRadius: 21,
-    backgroundColor: '#dbeafe',
-    justifyContent: 'center', alignItems: 'center',
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    backgroundColor: "#dbeafe",
+    justifyContent: "center",
+    alignItems: "center",
   },
-  missionTitle: { fontSize: 13, fontWeight: '700', color: C.primary, marginBottom: 4 },
-  missionBody:  { fontSize: 12, color: C.sub, lineHeight: 19 },
+  missionTitle: {
+    fontSize: 13,
+    fontWeight: "700",
+    color: C.primary,
+    marginBottom: 4,
+  },
+  missionBody: { fontSize: 12, color: C.sub, lineHeight: 19 },
 
   featureScroll: { gap: 10, paddingRight: 4 },
   featureCard: {
-    width: width * 0.60, borderRadius: 14,
-    padding: 14, gap: 7, marginRight: 2,
+    width: width * 0.6,
+    borderRadius: 14,
+    padding: 14,
+    gap: 7,
+    marginRight: 2,
   },
-  featureCardTitle: { color: C.white, fontWeight: '700', fontSize: 13 },
-  featureCardDesc:  { color: 'rgba(255,255,255,0.85)', fontSize: 11, lineHeight: 17 },
+  featureCardTitle: { color: C.white, fontWeight: "700", fontSize: 13 },
+  featureCardDesc: {
+    color: "rgba(255,255,255,0.85)",
+    fontSize: 11,
+    lineHeight: 17,
+  },
 
   doctorCard: {
-    flexDirection: 'row', alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     backgroundColor: C.white,
-    borderRadius: 16, padding: 12, marginBottom: 12,
-    shadowColor: '#000', shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.07, shadowRadius: 8, elevation: 3,
+    borderRadius: 16,
+    padding: 12,
+    marginBottom: 12,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.07,
+    shadowRadius: 8,
+    elevation: 3,
     gap: 12,
   },
-  doctorAvatar:   { width: 64, height: 64, borderRadius: 12, backgroundColor: '#e5e7eb' },
-  doctorInfo:     { flex: 1 },
-  doctorNameRow:  { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 2 },
-  doctorName:     { fontSize: 13, fontWeight: '700', color: C.text, flex: 1, marginRight: 6 },
-  ratingPill: {
-    flexDirection: 'row', alignItems: 'center', gap: 3,
-    backgroundColor: '#fef9ee',
-    paddingHorizontal: 7, paddingVertical: 3, borderRadius: 20,
+  doctorAvatar: {
+    width: 64,
+    height: 64,
+    borderRadius: 12,
+    backgroundColor: "#e5e7eb",
   },
-  ratingText:    { fontSize: 11, fontWeight: '600', color: C.text },
-  doctorRole:    { fontSize: 11, color: C.sub, marginBottom: 4 },
-  doctorMetaRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: 2 },
-  doctorMeta:    { fontSize: 11, color: C.muted },
-  doctorFee:     { fontSize: 11, color: C.sub, fontWeight: '500' },
+  doctorInfo: { flex: 1 },
+  doctorNameRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 2,
+  },
+  doctorName: {
+    fontSize: 13,
+    fontWeight: "700",
+    color: C.text,
+    flex: 1,
+    marginRight: 6,
+  },
+  ratingPill: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 3,
+    backgroundColor: "#fef9ee",
+    paddingHorizontal: 7,
+    paddingVertical: 3,
+    borderRadius: 20,
+  },
+  ratingText: { fontSize: 11, fontWeight: "600", color: C.text },
+  doctorRole: { fontSize: 11, color: C.sub, marginBottom: 4 },
+  doctorMetaRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    marginBottom: 2,
+  },
+  doctorMeta: { fontSize: 11, color: C.muted },
+  doctorFee: { fontSize: 11, color: C.sub, fontWeight: "500" },
   arrowBtn: {
-    width: 36, height: 36, borderRadius: 10,
+    width: 36,
+    height: 36,
+    borderRadius: 10,
     backgroundColor: C.dark,
-    justifyContent: 'center', alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
 
   detailsTab: { paddingTop: 4 },
   detailRow: {
-    flexDirection: 'row', justifyContent: 'space-between',
+    flexDirection: "row",
+    justifyContent: "space-between",
     paddingVertical: 13,
-    borderBottomWidth: 1, borderBottomColor: '#f1f5f9',
+    borderBottomWidth: 1,
+    borderBottomColor: "#f1f5f9",
   },
-  detailLabel: { fontSize: 13, color: C.muted, fontWeight: '500' },
-  detailValue: { fontSize: 13, color: C.text, fontWeight: '600', maxWidth: '60%', textAlign: 'right' },
+  detailLabel: { fontSize: 13, color: C.muted, fontWeight: "500" },
+  detailValue: {
+    fontSize: 13,
+    color: C.text,
+    fontWeight: "600",
+    maxWidth: "60%",
+    textAlign: "right",
+  },
 
   stickyBar: {
-    position: 'absolute', bottom: 0, left: 0, right: 0,
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
     backgroundColor: C.white,
-    paddingHorizontal: 20, paddingVertical: 14,
-    borderTopWidth: 1, borderTopColor: '#f1f5f9',
+    paddingHorizontal: 20,
+    paddingVertical: 14,
+    borderTopWidth: 1,
+    borderTopColor: "#f1f5f9",
   },
   bookBtn: {
-    backgroundColor: C.dark, borderRadius: 50,
+    backgroundColor: C.dark,
+    borderRadius: 50,
     paddingVertical: 16,
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
   },
-  bookBtnText: { color: C.white, fontSize: 15, fontWeight: '700' },
+  bookBtnText: { color: C.white, fontSize: 15, fontWeight: "700" },
 });
