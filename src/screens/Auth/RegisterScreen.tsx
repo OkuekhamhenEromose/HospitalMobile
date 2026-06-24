@@ -11,10 +11,10 @@ import {
   ScrollView,
   ActivityIndicator,
   Alert,
+  Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import Svg, { Path } from 'react-native-svg';
-import { Image } from 'react-native';
+import Svg, { Path, Circle } from 'react-native-svg';
 
 // ── colour tokens ─────────────────────────────────────────────────────────────
 const C = {
@@ -30,19 +30,59 @@ const C = {
   inputBg:   '#f3f6fc',
   success:   '#10b981',
 };
+
 const ETTA_LOGO = require('../../../assets/images/etta-logo.png');
 
 // ── RBAC roles ────────────────────────────────────────────────────────────────
 type Role = 'PATIENT' | 'DOCTOR' | 'NURSE' | 'LAB' | 'ADMIN';
-const ROLES: { key: Role; label: string; icon: string }[] = [
-  { key: 'PATIENT', label: 'Patient',       icon: '🧑‍⚕️' },
-  { key: 'DOCTOR',  label: 'Doctor',        icon: '👨‍⚕️' },
-  { key: 'NURSE',   label: 'Nurse',         icon: '🩺' },
-  { key: 'LAB',     label: 'Lab Scientist', icon: '🔬' },
-  { key: 'ADMIN',   label: 'Admin',         icon: '🛡️' },
+
+// ── Role SVG icons ────────────────────────────────────────────────────────────
+const PatientIcon = ({ color }: { color: string }) => (
+  <Svg width={22} height={22} viewBox="0 0 64 64">
+    <Path fill={color} d="M29.905 11.078a5.225 5.225 0 0 0 5.616-4.789A5.23 5.23 0 0 0 30.725.673a5.22 5.22 0 0 0-5.614 4.792a5.22 5.22 0 0 0 4.794 5.614zm1.431 10.461a3.516 3.516 0 0 1 2.852 3.464a3.53 3.53 0 0 1-3.528 3.528H19.228a2.24 2.24 0 0 1-2.074-3.088l1.236-2.885l13.766-9.86h-6.559c-2.519-.07-4.289.805-5.304 2.789c-.688 1.335-4.342 9.498-4.342 9.498a3.528 3.528 0 0 0 3.278 4.836h4.465l-1.317 8.66l-6.93 20.026a3.37 3.37 0 1 0 6.402 2.113l7.969-22.59c1.554 2.525 4.647 7.051 5.173 7.906c.121 1.421 1.234 13.948 1.234 13.948a3.374 3.374 0 0 0 3.657 3.059a3.37 3.37 0 0 0 3.059-3.657l-1.31-14.743a3.3 3.3 0 0 0-.49-1.471l-5.729-9.285l.912-11.653s1.357 4.611 1.458 4.944c.291.952.947 1.635 1.62 2.18c.394.314 7.081 4.865 7.081 4.865c.372.172.676.323 1.075.35a2.35 2.35 0 0 0 2.533-2.158a2.37 2.37 0 0 0-.92-2.061s-6.663-4.575-6.934-4.774a1.4 1.4 0 0 1-.439-.61l-2.637-9.498c-.429-1.437-1.877-2.673-3.708-2.673h-.789z" />
+    <Path fill={color} d="M30.66 27.241a2.232 2.232 0 0 0 .24-4.453l-1.635 4.467z" />
+  </Svg>
+);
+
+const DoctorIcon = ({ color }: { color: string }) => (
+  <Svg width={20} height={22} viewBox="0 0 448 512">
+    <Path fill={color} d="M224 256a128 128 0 1 0 0-256a128 128 0 1 0 0 256m-96 55.2C54 332.9 0 401.3 0 482.3C0 498.7 13.3 512 29.7 512h388.6c16.4 0 29.7-13.3 29.7-29.7c0-81-54-149.4-128-171.1V362c27.6 7.1 48 32.2 48 62v40c0 8.8-7.2 16-16 16h-16c-8.8 0-16-7.2-16-16s7.2-16 16-16v-24c0-17.7-14.3-32-32-32s-32 14.3-32 32v24c8.8 0 16 7.2 16 16s-7.2 16-16 16h-16c-8.8 0-16-7.2-16-16v-40c0-29.8 20.4-54.9 48-62v-57.1q-9-.9-18.3-.9h-91.4q-9.3 0-18.3.9v65.4c23.1 6.9 40 28.3 40 53.7c0 30.9-25.1 56-56 56s-56-25.1-56-56c0-25.4 16.9-46.8 40-53.7zM144 448a24 24 0 1 0 0-48a24 24 0 1 0 0 48" />
+  </Svg>
+);
+
+const NurseIcon = ({ color }: { color: string }) => (
+  <Svg width={18} height={22} viewBox="0 0 20 24">
+    <Path fill={color} d="M19.534 21.152a10.6 10.6 0 0 0-.51-3.901l.021.075c-.058-.172-.104-1.326-2.014-2.072c-1.406-.549-3.291-.454-4.688-1.406a2 2 0 0 1-.078-.311l-.002-.015a12.1 12.1 0 0 0 4.006-1.533l-.054.03c-2.012-.572-2.16-3.784-2.301-5.76c0-.558-.111-1.09-.312-1.575l.01.027l-.03-.118L14.758.001H4.796l1.172 4.595l-.03.117a4 4 0 0 0-.302 1.547c-.142 2.022-.302 5.188-2.301 5.76a11.9 11.9 0 0 0 3.873 1.49l.076.012c-.024.13-.052.239-.086.346l.006-.02c-1.396.952-3.28.855-4.688 1.406C.607 16 .562 17.154.504 17.326c-.321.962-.506 2.07-.506 3.221q0 .32.019.634l-.001-.029c-.01.368 0 .923 1.101 1.406c3.261 1.429 8.64 1.44 8.661 1.44a27.9 27.9 0 0 0 8.857-1.498l-.196.058c1.098-.483 1.105-1.038 1.098-1.409zM13.807.738l-.975 3.834H6.709L5.734.738z" />
+    <Path fill={color} d="M8.234 3.063h1.077v1.079h.919V3.063h1.079v-.917h-1.083V1.071h-.919V2.15H8.234z" />
+  </Svg>
+);
+
+const LabIcon = ({ color }: { color: string }) => (
+  <Svg width={22} height={22} viewBox="0 0 24 24">
+    <Path fill={color} d="M8 17c-2.67 0-8 1.34-8 4v3h16v-3c0-2.66-5.33-4-8-4" />
+    <Circle cx="8" cy="12" r="4" fill={color} />
+    <Circle cx="20" cy="5" r="1" fill={color} />
+    <Circle cx="21.5" cy="3.5" r=".5" fill={color} />
+    <Circle cx="20.5" cy="1.5" r=".5" fill={color} />
+    <Path fill={color} d="M16 7v1h1l.003 10.031C17 19.712 18 21 19.5 21s2.5-1.207 2.5-3V8h1V7Zm5 8l-.565.424a1.77 1.77 0 0 1-1.05.326H19V15h-1v-2h1v-1h-1v-2h1V9h-1V8h3Z" />
+  </Svg>
+);
+
+const AdminIcon = ({ color }: { color: string }) => (
+  <Svg width={22} height={22} viewBox="0 0 26 26">
+    <Path fill={color} d="M16.563 15.9c-.159-.052-1.164-.505-.536-2.414h-.009c1.637-1.686 2.888-4.399 2.888-7.07c0-4.107-2.731-6.26-5.905-6.26c-3.176 0-5.892 2.152-5.892 6.26c0 2.682 1.244 5.406 2.891 7.088c.642 1.684-.506 2.309-.746 2.396c-3.324 1.203-7.224 3.394-7.224 5.557v.811c0 2.947 5.714 3.617 11.002 3.617c5.296 0 10.938-.67 10.938-3.617v-.811c0-2.228-3.919-4.402-7.407-5.557m-5.516 8.709c0-2.549 1.623-5.99 1.623-5.99l-1.123-.881c0-.842 1.453-1.723 1.453-1.723s1.449.895 1.449 1.723l-1.119.881s1.623 3.428 1.623 6.018c0 .406-3.906.312-3.906-.028" />
+  </Svg>
+);
+
+const ROLES: { key: Role; label: string; Icon: React.FC<{ color: string }> }[] = [
+  { key: 'PATIENT', label: 'Patient',       Icon: PatientIcon },
+  { key: 'DOCTOR',  label: 'Doctor',        Icon: DoctorIcon  },
+  { key: 'NURSE',   label: 'Nurse',         Icon: NurseIcon   },
+  { key: 'LAB',     label: 'Lab Scientist', Icon: LabIcon     },
+  { key: 'ADMIN',   label: 'Admin',         Icon: AdminIcon   },
 ];
 
-// ── Inline SVG icons ──────────────────────────────────────────────────────────
+// ── Inline SVG field icons ────────────────────────────────────────────────────
 const UserIcon = ({ color = C.muted }: { color?: string }) => (
   <Svg width={18} height={18} viewBox="0 0 24 24">
     <Path fill={color} d="M12 12a5 5 0 1 0 0-10 5 5 0 0 0 0 10m0 2c-5.33 0-8 2.67-8 4v1h16v-1c0-1.33-2.67-4-8-4" />
@@ -77,7 +117,7 @@ const EyeIcon = ({ visible, color = C.muted }: { visible: boolean; color?: strin
   </Svg>
 );
 
-// ── Form state type ───────────────────────────────────────────────────────────
+// ── Form state ────────────────────────────────────────────────────────────────
 interface FormState {
   fullname:  string;
   username:  string;
@@ -89,7 +129,6 @@ interface FormState {
   password2: string;
 }
 
-// ── Component ─────────────────────────────────────────────────────────────────
 interface RegisterScreenProps {
   navigation?: any;
 }
@@ -105,10 +144,10 @@ export default function RegisterScreen({ navigation }: RegisterScreenProps) {
     password1: '',
     password2: '',
   });
-  const [showPass1,  setShowPass1]  = useState(false);
-  const [showPass2,  setShowPass2]  = useState(false);
-  const [loading,    setLoading]    = useState(false);
-  const [errors,     setErrors]     = useState<Partial<Record<keyof FormState, string>>>({});
+  const [showPass1, setShowPass1] = useState(false);
+  const [showPass2, setShowPass2] = useState(false);
+  const [loading,   setLoading]   = useState(false);
+  const [errors,    setErrors]    = useState<Partial<Record<keyof FormState, string>>>({});
 
   const set = (key: keyof FormState) => (val: string) => {
     setForm(f => ({ ...f, [key]: val }));
@@ -132,11 +171,7 @@ export default function RegisterScreen({ navigation }: RegisterScreenProps) {
     if (!validate()) return;
     setLoading(true);
     try {
-      // TODO: wire up apiService.registerWithImage() + AuthContext login()
-      Alert.alert(
-        'Registration',
-        `Account for ${form.fullname} (${form.role}) — wire up API here.`,
-      );
+      Alert.alert('Registration', `Account for ${form.fullname} (${form.role}) — wire up API here.`);
       navigation?.navigate?.('Login');
     } catch (err: any) {
       Alert.alert('Registration Failed', err.message ?? 'Something went wrong');
@@ -145,7 +180,6 @@ export default function RegisterScreen({ navigation }: RegisterScreenProps) {
     }
   };
 
-  // ── Render ──────────────────────────────────────────────────────────────────
   const field = (
     label: string,
     key: keyof FormState,
@@ -185,10 +219,7 @@ export default function RegisterScreen({ navigation }: RegisterScreenProps) {
 
   return (
     <SafeAreaView style={styles.safe}>
-      <KeyboardAvoidingView
-        style={{ flex: 1 }}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      >
+      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
         <ScrollView
           contentContainerStyle={styles.scroll}
           keyboardShouldPersistTaps="handled"
@@ -198,14 +229,13 @@ export default function RegisterScreen({ navigation }: RegisterScreenProps) {
           <View style={styles.header}>
             <Image source={ETTA_LOGO} style={styles.logo} resizeMode="contain" />
             <Text style={styles.cardTitle}>Let's Get Started!</Text>
-            <Text style={styles.cardSub}>
-              Create your Etha-Atlantic health portal account
-            </Text>
+            <Text style={styles.cardSub}>Create your Etha-Atlantic health portal account</Text>
           </View>
 
           {/* Card */}
           <View style={styles.card}>
-            {/* Role picker */}
+
+            {/* ── Role picker ── */}
             <Text style={styles.fieldLabel}>I am a…</Text>
             <ScrollView
               horizontal
@@ -213,27 +243,23 @@ export default function RegisterScreen({ navigation }: RegisterScreenProps) {
               contentContainerStyle={styles.roleScroll}
               style={{ marginBottom: 18 }}
             >
-              {ROLES.map(r => (
-                <TouchableOpacity
-                  key={r.key}
-                  style={[
-                    styles.roleChip,
-                    form.role === r.key && styles.roleChipActive,
-                  ]}
-                  onPress={() => setForm(f => ({ ...f, role: r.key }))}
-                  activeOpacity={0.7}
-                >
-                  <Text style={styles.roleEmoji}>{r.icon}</Text>
-                  <Text
-                    style={[
-                      styles.roleLabel,
-                      form.role === r.key && styles.roleLabelActive,
-                    ]}
+              {ROLES.map(({ key, label, Icon }) => {
+                const active = form.role === key;
+                const iconColor = active ? C.primary : C.muted;
+                return (
+                  <TouchableOpacity
+                    key={key}
+                    style={[styles.roleChip, active && styles.roleChipActive]}
+                    onPress={() => setForm(f => ({ ...f, role: key }))}
+                    activeOpacity={0.7}
                   >
-                    {r.label}
-                  </Text>
-                </TouchableOpacity>
-              ))}
+                    <Icon color={iconColor} />
+                    <Text style={[styles.roleLabel, active && styles.roleLabelActive]}>
+                      {label}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
             </ScrollView>
 
             {/* Fields */}
@@ -259,26 +285,18 @@ export default function RegisterScreen({ navigation }: RegisterScreenProps) {
               autoCapitalize: 'none',
             })}
 
-            {/* Gender row */}
+            {/* Gender */}
             <View style={styles.fieldGroup}>
               <Text style={styles.fieldLabel}>Gender</Text>
               <View style={styles.genderRow}>
                 {([['M', 'Male'], ['F', 'Female'], ['O', 'Other']] as const).map(([k, l]) => (
                   <TouchableOpacity
                     key={k}
-                    style={[
-                      styles.genderBtn,
-                      form.gender === k && styles.genderBtnActive,
-                    ]}
+                    style={[styles.genderBtn, form.gender === k && styles.genderBtnActive]}
                     onPress={() => setForm(f => ({ ...f, gender: k }))}
                     activeOpacity={0.7}
                   >
-                    <Text
-                      style={[
-                        styles.genderLabel,
-                        form.gender === k && styles.genderLabelActive,
-                      ]}
-                    >
+                    <Text style={[styles.genderLabel, form.gender === k && styles.genderLabelActive]}>
                       {l}
                     </Text>
                   </TouchableOpacity>
@@ -310,11 +328,10 @@ export default function RegisterScreen({ navigation }: RegisterScreenProps) {
               activeOpacity={0.85}
               disabled={loading}
             >
-              {loading ? (
-                <ActivityIndicator color={C.white} />
-              ) : (
-                <Text style={styles.primaryBtnText}>CREATE ACCOUNT</Text>
-              )}
+              {loading
+                ? <ActivityIndicator color={C.white} />
+                : <Text style={styles.primaryBtnText}>CREATE ACCOUNT</Text>
+              }
             </TouchableOpacity>
 
             {/* Sign in link */}
@@ -330,7 +347,6 @@ export default function RegisterScreen({ navigation }: RegisterScreenProps) {
             </TouchableOpacity>
           </View>
 
-          {/* Footer */}
           <Text style={styles.footer}>
             By creating an account you agree to our{' '}
             <Text style={styles.footerLink}>Terms</Text> &{' '}
@@ -348,7 +364,7 @@ const styles = StyleSheet.create({
   scroll: { flexGrow: 1, paddingHorizontal: 20, paddingBottom: 36 },
 
   header: { alignItems: 'center', paddingTop: 28, paddingBottom: 20, gap: 6 },
-  logo: { width: 120, height: 48 },
+  logo:   { width: 120, height: 48 },
   cardTitle: { fontSize: 22, fontWeight: '800', color: C.text, marginTop: 10 },
   cardSub:   { fontSize: 13, color: C.sub, textAlign: 'center', lineHeight: 20 },
 
@@ -374,36 +390,26 @@ const styles = StyleSheet.create({
     borderColor: C.border,
     backgroundColor: C.inputBg,
     minWidth: 76,
-    gap: 4,
+    gap: 6,
   },
   roleChipActive: {
     borderColor: C.primary,
     backgroundColor: '#eff6ff',
   },
-  roleEmoji: { fontSize: 20 },
-  roleLabel: { fontSize: 11, fontWeight: '600', color: C.sub, textAlign: 'center' },
-  roleLabelActive: { color: C.primary },
+  roleLabel:       { fontSize: 11, fontWeight: '600', color: C.sub,     textAlign: 'center' },
+  roleLabelActive: { fontSize: 11, fontWeight: '600', color: C.primary, textAlign: 'center' },
 
   // Fields
   fieldGroup: { marginBottom: 14 },
   fieldLabel: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: C.sub,
-    marginBottom: 6,
-    letterSpacing: 0.5,
-    textTransform: 'uppercase',
+    fontSize: 11, fontWeight: '700', color: C.sub,
+    marginBottom: 6, letterSpacing: 0.5, textTransform: 'uppercase',
   },
   inputRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    backgroundColor: C.inputBg,
-    borderRadius: 12,
-    paddingHorizontal: 14,
-    height: 52,
-    borderWidth: 1.5,
-    borderColor: C.border,
+    flexDirection: 'row', alignItems: 'center', gap: 10,
+    backgroundColor: C.inputBg, borderRadius: 12,
+    paddingHorizontal: 14, height: 52,
+    borderWidth: 1.5, borderColor: C.border,
   },
   inputError: { borderColor: C.red },
   input: { flex: 1, fontSize: 14, color: C.text, paddingVertical: 0 },
@@ -412,30 +418,20 @@ const styles = StyleSheet.create({
   // Gender
   genderRow: { flexDirection: 'row', gap: 8 },
   genderBtn: {
-    flex: 1,
-    paddingVertical: 12,
-    borderRadius: 12,
-    borderWidth: 1.5,
-    borderColor: C.border,
-    backgroundColor: C.inputBg,
-    alignItems: 'center',
+    flex: 1, paddingVertical: 12, borderRadius: 12,
+    borderWidth: 1.5, borderColor: C.border,
+    backgroundColor: C.inputBg, alignItems: 'center',
   },
-  genderBtnActive: { borderColor: C.primary, backgroundColor: '#eff6ff' },
-  genderLabel: { fontSize: 13, fontWeight: '600', color: C.sub },
-  genderLabelActive: { color: C.primary },
+  genderBtnActive:   { borderColor: C.primary, backgroundColor: '#eff6ff' },
+  genderLabel:       { fontSize: 13, fontWeight: '600', color: C.sub },
+  genderLabelActive: { fontSize: 13, fontWeight: '600', color: C.primary },
 
   // CTA
   primaryBtn: {
-    backgroundColor: C.primary,
-    borderRadius: 14,
-    paddingVertical: 16,
-    alignItems: 'center',
-    marginTop: 8,
-    shadowColor: C.primary,
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.3,
-    shadowRadius: 10,
-    elevation: 5,
+    backgroundColor: C.primary, borderRadius: 14,
+    paddingVertical: 16, alignItems: 'center', marginTop: 8,
+    shadowColor: C.primary, shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.3, shadowRadius: 10, elevation: 5,
   },
   primaryBtnDisabled: { opacity: 0.65 },
   primaryBtnText: { color: C.white, fontWeight: '800', fontSize: 14, letterSpacing: 1 },
