@@ -379,23 +379,6 @@ export default function AboutScreen({ navigation }: AboutScreenProps) {
 
         <View style={{ height: 100 }} />
       </ScrollView>
-
-      {/* ── Book Now sticky bar ── */}
-      <View style={styles.stickyBar}>
-        <TouchableOpacity
-          style={styles.bookBtn}
-          onPress={() => navigate("Book")}
-          activeOpacity={0.88}
-        >
-          <Text style={styles.bookBtnText}>Book Appointment</Text>
-          <Ionicons
-            name="navigate-outline"
-            size={18}
-            color={C.white}
-            style={{ marginLeft: 8 }}
-          />
-        </TouchableOpacity>
-      </View>
     </View>
   );
 }
@@ -605,25 +588,4 @@ const styles = StyleSheet.create({
     maxWidth: "60%",
     textAlign: "right",
   },
-
-  stickyBar: {
-    position: "absolute",
-    bottom: 0,
-    left: 0,
-    right: 0,
-    backgroundColor: C.white,
-    paddingHorizontal: 20,
-    paddingVertical: 14,
-    borderTopWidth: 1,
-    borderTopColor: "#f1f5f9",
-  },
-  bookBtn: {
-    backgroundColor: C.dark,
-    borderRadius: 50,
-    paddingVertical: 16,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  bookBtnText: { color: C.white, fontSize: 15, fontWeight: "700" },
 });

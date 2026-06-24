@@ -191,23 +191,6 @@ export default function ContactScreen({ navigation }: ContactScreenProps) {
             style={s.heroImage}
             resizeMode="cover"
           />
-          <View style={s.heroGrad}>
-            <Text style={s.heroTitle}>Etta-Atlantic{'\n'}Medical Team</Text>
-            <Text style={s.heroSub}>Specialist Physicians · Lekki, Lagos</Text>
-            <View style={s.heroStatsRow}>
-              {[
-                { icon: 'people',   val: '5,000+', lbl: 'Patients'  },
-                { icon: 'star',     val: '4.9',    lbl: 'Rating'    },
-                { icon: 'schedule', val: '24/7',   lbl: 'Available' },
-              ].map((st, i) => (
-                <View key={i} style={s.heroStat}>
-                  <MaterialIcons name={st.icon as any} size={14} color={C.white} />
-                  <Text style={s.heroStatVal}>{st.val}</Text>
-                  <Text style={s.heroStatLbl}>{st.lbl}</Text>
-                </View>
-              ))}
-            </View>
-          </View>
         </View>
 
         {/* ══════════════════════════════════════════════════════════
@@ -577,18 +560,6 @@ const s = StyleSheet.create({
   // ── Section 1: Hero banner ──
   heroBanner:  { width, height: 200, position: 'relative' },
   heroImage:   { width: '100%', height: '100%' },
-  heroGrad: {
-    position: 'absolute', bottom: 0, left: 0, right: 0,
-    backgroundColor: 'rgba(19,120,229,0.82)',
-    padding: 16,
-  },
-  heroTitle:   { color: C.white, fontSize: 20, fontWeight: '800', lineHeight: 26, marginBottom: 2 },
-  heroSub:     { color: 'rgba(255,255,255,0.8)', fontSize: 12, marginBottom: 10 },
-  heroStatsRow:{ flexDirection: 'row', gap: 20 },
-  heroStat:    { alignItems: 'center', gap: 2 },
-  heroStatVal: { color: C.white, fontSize: 13, fontWeight: '700' },
-  heroStatLbl: { color: 'rgba(255,255,255,0.7)', fontSize: 10 },
-
   // ── Section 2: Tabs ──
   tabSection:    { backgroundColor: C.white, marginHorizontal: 16, marginTop: 16, borderRadius: 20, padding: 18, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 8, elevation: 2 },
   tabPillsRow:   { flexDirection: 'row', gap: 10 },
