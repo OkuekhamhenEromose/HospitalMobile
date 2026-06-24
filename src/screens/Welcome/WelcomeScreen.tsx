@@ -24,11 +24,14 @@ const C = {
   muted:   '#8898aa',
 };
 
-const HOSPITAL_DOCTOR = require('../../../assets/images/hospitaldoctor.png');
+const HOSPITAL_DOCTOR  = require('../../../assets/images/hospitaldoctor.png');
+const HOSPITAL_DOCTOR2 = require('../../../assets/images/hospitaldoctor2.png');
+const HOSPITAL_DOCTOR3 = require('../../../assets/images/hospitaldoctor3.png');
 
 const SLIDES = [
   {
     key: '1',
+    image:    HOSPITAL_DOCTOR,
     accentBg: '#dbeafe',
     title: 'World-Class\nHospital Care',
     subtitle:
@@ -36,6 +39,7 @@ const SLIDES = [
   },
   {
     key: '2',
+    image:    HOSPITAL_DOCTOR2,
     accentBg: '#eff6ff',
     title: 'Expert Doctors\nAt Your Service',
     subtitle:
@@ -43,6 +47,7 @@ const SLIDES = [
   },
   {
     key: '3',
+    image:    HOSPITAL_DOCTOR3,
     accentBg: '#f0fdf4',
     title: 'A Team Built\nAround You',
     subtitle:
@@ -90,10 +95,10 @@ export default function WelcomeScreen({ navigation }: Props) {
           showsHorizontalScrollIndicator={false}
           scrollEventThrottle={16}
           onScroll={onScroll}
-          renderItem={() => (
+          renderItem={({ item }) => (
             <View style={styles.slide}>
               <Image
-                source={HOSPITAL_DOCTOR}
+                source={item.image}
                 style={styles.illustration}
                 resizeMode="contain"
               />

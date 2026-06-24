@@ -5,7 +5,8 @@ import {
   KeyboardAvoidingView, Platform, ScrollView, ActivityIndicator, Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import Svg, { Path, Rect } from 'react-native-svg';
+import Svg, { Path } from 'react-native-svg';
+import { Image } from 'react-native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { AuthStackParamList } from '../../types/navigation';
 // import { useAuth } from '../../contexts/AuthContext';  // ← uncomment when wiring API
@@ -27,6 +28,7 @@ const C = {
   red:      '#ef4444',
   inputBg:  '#f3f6fc',
 };
+const ETTA_LOGO = require('../../../assets/images/etta-logo.png');
 
 const UserIcon = ({ color = C.muted }: { color?: string }) => (
   <Svg width={18} height={18} viewBox="0 0 24 24">
@@ -46,14 +48,6 @@ const EyeIcon = ({ visible, color = C.muted }: { visible: boolean; color?: strin
       ? <Path fill={color} d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5M12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5m0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3" />
       : <Path fill={color} d="M12 7c2.76 0 5 2.24 5 5 0 .65-.13 1.26-.36 1.83l2.92 2.92c1.51-1.26 2.7-2.89 3.43-4.75C21.27 7.11 17 4 12 4c-1.27 0-2.49.2-3.64.57l2.17 2.17C11.21 6.62 11.6 6.5 12 6.5zM2 4.27l2.28 2.28.46.46A11.8 11.8 0 0 0 3 12c1.73 4.39 6 7.5 11 7.5 1.55 0 3.03-.3 4.38-.84l.42.42L21.73 22 23 20.73 3.27 3zM7.53 9.8l1.55 1.55c-.05.21-.08.43-.08.65 0 1.66 1.34 3 3 3 .22 0 .44-.03.65-.08l1.55 1.55c-.67.33-1.41.53-2.2.53-2.76 0-5-2.24-5-5 0-.79.2-1.53.53-2.2m4.31-.78 3.15 3.15.02-.16c0-1.66-1.34-3-3-3z" />
     }
-  </Svg>
-);
-
-const HospitalLogo = () => (
-  <Svg width={48} height={48} viewBox="0 0 48 48">
-    <Rect x="0" y="0" width="48" height="48" rx="14" fill={C.primary} />
-    <Rect x="20" y="8"  width="8"  height="32" rx="3" fill={C.white} />
-    <Rect x="8"  y="20" width="32" height="8"  rx="3" fill={C.white} />
   </Svg>
 );
 
@@ -98,7 +92,7 @@ export default function LoginScreen({ navigation }: Props) {
         <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
 
           <View style={styles.header}>
-            <HospitalLogo />
+            <Image source={ETTA_LOGO} style={styles.logo} resizeMode="contain" />
             <Text style={styles.appName}>Etha-Atlantic</Text>
             <Text style={styles.appSub}>Memorial Hospital</Text>
           </View>
@@ -186,6 +180,7 @@ const styles = StyleSheet.create({
   scroll: { flexGrow: 1, paddingHorizontal: 20, paddingBottom: 32 },
 
   header: { alignItems: 'center', paddingTop: 36, paddingBottom: 24, gap: 6 },
+  logo: { width: 92, height: 92 },
   appName: { fontSize: 22, fontWeight: '800', color: C.text, marginTop: 10 },
   appSub:  { fontSize: 13, color: C.sub, letterSpacing: 0.3 },
 
