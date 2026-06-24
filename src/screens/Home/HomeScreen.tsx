@@ -1,4 +1,8 @@
-// HOMESCREEN.TSX
+// src/screens/Home/HomeScreen.tsx
+// Change from original: back arrow replaced with SignOut SVG icon.
+// Behaviour on press is identical — navigation.goBack() — leading back to the Auth/Sign-in screen.
+// No useAuth / AuthContext dependency (to be wired up later).
+
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   View,
@@ -47,6 +51,47 @@ const HERO_IMAGES = [
   require('../../../assets/images/hospitaldoctor4.png'),
   require('../../../assets/images/hospitaldoctor5.png'),
 ];
+
+// ── Sign-out SVG icon ─────────────────────────────────────────────────────────
+const SignOutIcon = ({ color = C.text }: { color?: string }) => (
+  <Svg width={24} height={24} viewBox="0 0 24 24">
+    <Path d="M0 0h24v24H0z" fill="none" />
+    <Path
+      fill={color}
+      d="M12.232 3.25H9.768c-.813 0-1.469 0-2 .043c-.546.045-1.026.14-1.47.366a3.75 3.75 0 0 0-1.64 1.639c-.226.444-.32.924-.365 1.47c-.043.531-.043 1.187-.043 2v6.464c0 .813 0 1.469.043 2c.045.546.14 1.026.366 1.47a3.75 3.75 0 0 0 1.639 1.64c.444.226.924.32 1.47.365c.531.043 1.187.043 2 .043h2.464c.813 0 1.469 0 2-.043c.546-.045 1.026-.14 1.47-.366a3.75 3.75 0 0 0 1.64-1.639c.226-.444.32-.924.365-1.47c.043-.531.043-1.187.043-2V15a.75.75 0 0 0-1.5 0v.2c0 .852 0 1.447-.038 1.91c-.038.453-.107.714-.207.912c-.216.423-.56.767-.983.983c-.198.1-.459.17-.913.207c-.462.037-1.056.038-1.909.038H9.8c-.852 0-1.447 0-1.91-.038c-.453-.038-.714-.107-.911-.207a2.25 2.25 0 0 1-.984-.983c-.1-.198-.17-.459-.207-.913c-.037-.462-.038-1.057-.038-1.909V8.8c0-.852 0-1.447.038-1.91c.037-.453.107-.714.207-.911a2.25 2.25 0 0 1 .984-.984c.197-.1.458-.17.912-.207c.462-.037 1.057-.038 1.909-.038h2.4c.853 0 1.447 0 1.91.038c.453.037.714.107.912.207c.423.216.767.56.983.984c.1.197.17.458.207.912c.037.462.038 1.057.038 1.909V9a.75.75 0 0 0 1.5 0v-.232c0-.813 0-1.469-.043-2c-.045-.546-.14-1.026-.366-1.47a3.75 3.75 0 0 0-1.639-1.64c-.444-.226-.924-.32-1.47-.365c-.531-.043-1.187-.043-2-.043"
+    />
+    <Path
+      fill={color}
+      d="M12.47 8.47a.75.75 0 1 1 1.06 1.06l-1.72 1.72H20a.75.75 0 0 1 0 1.5h-8.19l1.72 1.72a.75.75 0 1 1-1.06 1.06l-3-3a.75.75 0 0 1 0-1.06z"
+    />
+  </Svg>
+);
+
+// ── Notification bell SVG icon ────────────────────────────────────────────────
+const NotificationIcon = ({ color = C.text }: { color?: string }) => (
+  <Svg width={24} height={24} viewBox="0 0 24 24">
+    <Path d="M0 0h24v24H0z" fill="none" />
+    <Path
+      fill={color}
+      fillRule="evenodd"
+      d="M12 1a2 2 0 0 0-1.98 2.284A7 7 0 0 0 5 10v8H4a1 1 0 1 0 0 2h16a1 1 0 1 0 0-2h-1v-8a7 7 0 0 0-5.02-6.716Q14 3.144 14 3a2 2 0 0 0-2-2m2 21a1 1 0 0 1-1 1h-2a1 1 0 1 1 0-2h2a1 1 0 0 1 1 1"
+      clipRule="evenodd"
+    />
+  </Svg>
+);
+
+// ── Profile / person SVG icon ─────────────────────────────────────────────────
+const ProfileIcon = ({ color = C.text }: { color?: string }) => (
+  <Svg width={24} height={24} viewBox="0 0 24 24">
+    <Path d="M0 0h24v24H0z" fill="none" />
+    <Path
+      fill={color}
+      fillRule="evenodd"
+      d="M8 7a4 4 0 1 1 8 0a4 4 0 0 1-8 0m0 6a5 5 0 0 0-5 5a3 3 0 0 0 3 3h12a3 3 0 0 0 3-3a5 5 0 0 0-5-5z"
+      clipRule="evenodd"
+    />
+  </Svg>
+);
 
 // ── Stat SVG icons ────────────────────────────────────────────────────────────
 const PatientStatIcon = ({ color }: { color: string }) => (
@@ -108,7 +153,6 @@ interface HomeScreenProps {
 // ─────────────────────────────────────────────────────────────────────────────
 export default function HomeScreen({ navigation }: HomeScreenProps) {
   const [activeIndex,   setActiveIndex]   = useState(0);
-  const [isSaved,       setIsSaved]       = useState(false);
   const [aboutExpanded, setAboutExpanded] = useState(false);
   const [post,          setPost]          = useState<any>(null);
   const [loadingPost,   setLoadingPost]   = useState(true);
@@ -166,6 +210,7 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
       <ScrollView showsVerticalScrollIndicator={false}>
 
         {/* ══ HERO carousel ═══════════════════════════════════════════════════ */}
+        <SafeAreaView style={styles.heroSafeArea}>
         <View>
           <FlatList
             ref={flatListRef}
@@ -176,7 +221,6 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
             onScroll={onCarouselScroll}
             scrollEventThrottle={16}
             renderItem={({ item }) => (
-              // paddingTop pushes image down from the very top edge
               <View style={styles.heroSlide}>
                 <Image source={item} style={styles.heroImage} resizeMode="cover" />
               </View>
@@ -194,23 +238,53 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
           {HERO_IMAGES.length > 1 && (
             <View style={styles.dotsRow}>
               {HERO_IMAGES.map((_, i) => (
-                <View key={i} style={[styles.dot, i === activeIndex ? styles.dotActive : styles.dotInactive]} />
+                <View
+                  key={i}
+                  style={[
+                    styles.dot,
+                    i === activeIndex ? styles.dotActive : styles.dotInactive,
+                  ]}
+                />
               ))}
             </View>
           )}
 
-          {/* Back + Save overlay */}
-          <SafeAreaView style={styles.heroOverlay}>
+          {/* ── Overlay: SignOut (left) │ Notification + Profile (right) ── */}
+          <View style={styles.heroOverlay}>
             <View style={styles.heroOverlayRow}>
-              <TouchableOpacity style={styles.circleBtn} onPress={() => navigation?.goBack?.()} activeOpacity={0.8}>
-                <Ionicons name="arrow-back" size={20} color={C.text} />
+
+              {/* LEFT — sign out, navigates back to sign-in */}
+              <TouchableOpacity
+                style={styles.iconBtn}
+                onPress={() => navigation?.goBack?.()}
+                activeOpacity={0.7}
+              >
+                <SignOutIcon color={C.text} />
               </TouchableOpacity>
-              <TouchableOpacity style={styles.circleBtn} onPress={() => setIsSaved(v => !v)} activeOpacity={0.8}>
-                <Ionicons name={isSaved ? 'heart' : 'heart-outline'} size={20} color={isSaved ? C.red : C.text} />
-              </TouchableOpacity>
+
+              {/* RIGHT — notification + profile, side by side */}
+              <View style={styles.rightIconsRow}>
+                <TouchableOpacity
+                  style={styles.iconBtn}
+                  onPress={() => navigate('Notifications')}
+                  activeOpacity={0.7}
+                >
+                  <NotificationIcon color={C.text} />
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={styles.iconBtn}
+                  onPress={() => navigate('Profile')}
+                  activeOpacity={0.7}
+                >
+                  <ProfileIcon color={C.text} />
+                </TouchableOpacity>
+              </View>
+
             </View>
-          </SafeAreaView>
+          </View>
         </View>
+        </SafeAreaView>
 
         {/* ══ CONTENT ═════════════════════════════════════════════════════════ */}
         <View style={styles.content}>
@@ -236,7 +310,7 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
             <Text style={styles.ratingCount}>(96 reviews)</Text>
           </View>
 
-          {/* ── Stats row with custom SVG icons ── */}
+          {/* Stats */}
           <View style={styles.statsCard}>
             {STATS.map(({ Icon, value, label }, i) => (
               <View key={i} style={[styles.statItem, i < STATS.length - 1 && styles.statBorder]}>
@@ -364,13 +438,24 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: C.white },
 
-  // Hero — slide wrapper adds top padding to pull image down from screen edge
-  heroSlide: {
-    width,
-    paddingTop: 48, // pushes image down, matching WelcomeScreen's paddingTop: 60 reference
+  // Wraps the entire hero block so the status-bar inset is respected,
+  // pushing the image section down exactly like BlogScreen's SafeAreaView top bar.
+  heroSafeArea: {
     backgroundColor: C.bg,
   },
-  heroImage: { width, height: 270 },
+
+  // paddingTop: 56 clears the floating icon row (≈ safe-area + icon height).
+  // overflow: hidden keeps the image flush inside the slide bounds.
+  heroSlide: {
+    width,
+    overflow: 'hidden',
+    backgroundColor: C.bg,
+    paddingTop: 56,
+  },
+
+  // Raw height raised by the same 56 px so the visible portrait area stays
+  // at 340 px and nothing gets cropped.
+  heroImage: { width, height: 396 },
 
   imageBadge: {
     position: 'absolute', bottom: 12, right: 16,
@@ -390,15 +475,22 @@ const styles = StyleSheet.create({
   heroOverlay: { position: 'absolute', top: 0, left: 0, right: 0 },
   heroOverlayRow: {
     flexDirection: 'row', justifyContent: 'space-between',
-    paddingHorizontal: 16, paddingTop: 8,
+    alignItems: 'center',
+    paddingHorizontal: 16, paddingTop: 6,
   },
-  circleBtn: {
-    width: 40, height: 40, borderRadius: 20,
-    backgroundColor: C.white,
-    justifyContent: 'center', alignItems: 'center',
-    elevation: 3,
-    shadowColor: '#000', shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.12, shadowRadius: 4,
+
+  rightIconsRow: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+
+  // FIX 2 — stripped backgroundColor, elevation, and all shadow props.
+  //          Only size + alignment remain so icons render bare over the image.
+  iconBtn: {
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 
   content: { paddingHorizontal: 20, paddingTop: 20, paddingBottom: 8 },
