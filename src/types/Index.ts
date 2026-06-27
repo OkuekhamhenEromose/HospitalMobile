@@ -1,22 +1,26 @@
+// src/types/index.ts
+// Types aligned with the Django backend models/serializers
+
+// ── Auth / User ───────────────────────────────────────────────────────────────
+
+export type Role = 'PATIENT' | 'DOCTOR' | 'NURSE' | 'LAB' | 'ADMIN';
+export type Gender = 'M' | 'F' | 'O';
+
+export interface Profile {
+  id?: number;
+  fullname: string;
+  phone?: string | null;
+  gender?: Gender | null;
+  profile_pix?: string | null;
+  role: Role;
+}
+
+/** Matches the Django User model + OneToOne Profile */
 export interface User {
-  id: string;
+  id: number;        // backend returns int, not string
   username: string;
   email: string;
-  firstName?: string;
-  lastName?: string;
-  profile?: UserProfile;
-}
-
-export interface UserProfile {
-  role: 'ADMIN' | 'DOCTOR' | 'NURSE' | 'LAB' | 'PATIENT';
-  phone?: string;
-  avatar?: string;
-}
-
-export interface AuthResponse {
-  access: string;
-  refresh: string;
-  user: User;
+  profile?: Profile;
 }
 
 export interface LoginData {
@@ -24,31 +28,36 @@ export interface LoginData {
   password: string;
 }
 
+/** Matches the backend /users/register/ payload */
 export interface RegisterData {
   username: string;
   email: string;
-  password: string;
-  firstName?: string;
-  lastName?: string;
+  password1: string;  // backend uses password1/password2, not password
+  password2: string;
+  fullname: string;
+  phone?: string;
+  gender?: Gender | '';
+  role: Role;
 }
 
-export interface BlogPost {
-  id: number;
-  slug: string;
-  title: string;
-  description: string;
-  content?: string;
-  featured_image?: string;
-  image_1?: string;
-  image_2?: string;
-  author?: string;
-  created_at: string;
-  updated_at: string;
-  is_published: boolean;
-  subheadings?: SubHeading[];
-  first_two_subheadings?: SubHeading[];
-  table_of_contents?: TableOfContentsItem[];
+/** Matches the backend login + token-refresh response */
+export interface AuthResponse {
+  access: string;
+  refresh: string;
+  user: User;
 }
+
+export interface TokenResponse {
+  access: string;
+  refresh?: string;
+}
+
+export interface DashboardResponse {
+  user: User;
+  [key: string]: unknown;
+}
+
+// ── Blog ──────────────────────────────────────────────────────────────────────
 
 export interface SubHeading {
   id: number;
@@ -60,38 +69,81 @@ export interface SubHeading {
 }
 
 export interface TableOfContentsItem {
+  id: number;
   title: string;
   anchor: string;
   level: number;
 }
 
+export interface BlogPost {
+  id: number;
+  slug: string;
+  title: string;
+  description: string;
+  content?: string;
+  featured_image?: string | null;
+  image_1?: string | null;
+  image_2?: string | null;
+  author_name?: string;
+  author_role?: string;
+  created_at: string;
+  published_date?: string;
+  published: boolean;
+  subheadings?: SubHeading[];
+  table_of_contents?: TableOfContentsItem[];
+  enable_toc?: boolean;
+}
+
+// ── Hospital ──────────────────────────────────────────────────────────────────
+
+export type AppointmentStatus = 'PENDING' | 'IN_REVIEW' | 'COMPLETED' | 'CANCELLED';
+export type RequestStatus     = 'PENDING' | 'IN_PROGRESS' | 'DONE';
+export type AssignmentRole    = 'DOCTOR' | 'NURSE' | 'LAB';
+
 export interface Appointment {
   id: number;
-  patient_name: string;
-  patient_email?: string;
-  patient_phone: string;
-  appointment_date: string;
-  appointment_time: string;
-  reason?: string;
-  status: 'PENDING' | 'CONFIRMED' | 'CANCELLED' | 'COMPLETED';
+  patient?: Profile;
+  name: string;
+  age: number;
+  sex: string;
+  message?: string;
+  address?: string;
+  booked_at: string;
+  status: AppointmentStatus;
+  assignments?: Assignment[];
+  test_requests?: TestRequest[];
+  vital_requests?: VitalRequest[];
+}
+
+export interface Assignment {
+  id: number;
+  appointment: number;
+  staff?: Profile;
+  role: AssignmentRole;
+  notes?: string;
+  assigned_at: string;
+}
+
+export interface TestRequest {
+  id: number;
+  appointment: number;
+  tests: string;
+  note?: string;
+  status: RequestStatus;
   created_at: string;
+  assigned_to?: Profile | null;
 }
 
-export interface Package {
+export interface VitalRequest {
   id: number;
-  name: string;
-  description: string;
-  price: number;
-  features: string[];
-  is_popular?: boolean;
+  appointment: number;
+  note?: string;
+  status: RequestStatus;
+  created_at: string;
+  assigned_to?: Profile | null;
 }
 
-export interface Service {
-  id: number;
-  name: string;
-  description: string;
-  icon?: string;
-}
+// ── Generic API error shape ───────────────────────────────────────────────────
 
 export interface ApiError {
   message: string;

@@ -1,99 +1,133 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+// src/contexts/AuthContext.tsx
+// Mirrors the web AuthProvider but uses AsyncStorage (via storageService)
+// instead of localStorage.
+
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useCallback,
+  type ReactNode,
+} from 'react';
 import { apiService } from '../services/api';
 import { storageService } from '../services/storage';
-import type { User, LoginData, RegisterData, AuthResponse } from '../types';
+import type { User, LoginData, RegisterData } from '../types';
+
+// ── Context shape ──────────────────────────────────────────────────────────────
 
 interface AuthContextType {
-  user: User | null;
-  loading: boolean;
-  login: (data: LoginData) => Promise<void>;
-  register: (data: RegisterData) => Promise<void>;
-  logout: () => Promise<void>;
-  refreshUser: () => Promise<void>;
+  user:        User | null;
+  loading:     boolean;
+  login:       (data: LoginData)    => Promise<void>;
+  register:    (data: RegisterData) => Promise<void>;
+  logout:      ()                   => Promise<void>;
+  refreshUser: ()                   => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+// ── Hook ───────────────────────────────────────────────────────────────────────
+
 export const useAuth = (): AuthContextType => {
-  const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error('useAuth must be used within AuthProvider');
-  }
-  return context;
+  const ctx = useContext(AuthContext);
+  if (!ctx) throw new Error('useAuth must be used within <AuthProvider>');
+  return ctx;
 };
 
-interface AuthProviderProps {
-  children: ReactNode;
-}
+// ── Provider ───────────────────────────────────────────────────────────────────
 
-export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(null);
+export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+  const [user,    setUser]    = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    checkAuth();
-  }, []);
-
-  const checkAuth = async () => {
+  /**
+   * Boot-time auth check:
+   *  1. Read the stored token — bail early if none exists.
+   *  2. Hydrate the UI from the cached user instantly (no flicker).
+   *  3. Verify with the server (handles token rotation / expiry).
+   */
+  const checkAuth = useCallback(async () => {
     try {
       setLoading(true);
-      const token = await storageService.getAccessToken();
-      const userData = await storageService.getUserData();
 
-      if (token && userData) {
-        setUser(userData);
-      } else {
+      const token = await storageService.getAccessToken();
+      if (!token) {
         setUser(null);
+        return;
       }
-    } catch (error) {
-      console.error('Auth check failed:', error);
+
+      // Show cached user immediately so the UI doesn't stay blank
+      const cached = await storageService.getUserData();
+      if (cached) setUser(cached);
+
+      // Verify with server (auto-refreshes the token if expired)
+      try {
+        const response = await apiService.getDashboard();
+        if (response?.user) {
+          setUser(response.user);
+          await storageService.setUserData(response.user);
+        }
+      } catch {
+        // Server check failed — keep the cached user to avoid unnecessary
+        // log-outs during transient network issues, but clear storage if
+        // there was nothing cached either (token is definitively bad).
+        if (!cached) {
+          await storageService.clearAll();
+          setUser(null);
+        }
+      }
+    } catch {
+      await storageService.clearAll();
       setUser(null);
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const login = async (data: LoginData) => {
-    try {
-      const response: AuthResponse = await apiService.login(data);
-      setUser(response.user);
-    } catch (error) {
-      throw error;
-    }
-  };
+  useEffect(() => { checkAuth(); }, [checkAuth]);
 
-  const register = async (data: RegisterData) => {
-    try {
-      await apiService.register(data);
-    } catch (error) {
-      throw error;
-    }
-  };
+  // ── Auth actions ────────────────────────────────────────────────────────────
 
-  const logout = async () => {
+  const login = useCallback(async (data: LoginData): Promise<void> => {
+    // apiService.login() persists tokens + user to storage internally
+    const response = await apiService.login(data);
+    setUser(response.user);
+  }, []);
+
+  const register = useCallback(async (data: RegisterData): Promise<void> => {
+    // 1. Create the account
+    await apiService.register(data);
+
+    // 2. Auto-login with the same credentials (mirrors the web flow)
+    const loginResponse = await apiService.login({
+      username: data.username,
+      password: data.password1,  // backend field is password1
+    });
+    setUser(loginResponse.user);
+  }, []);
+
+  const logout = useCallback(async (): Promise<void> => {
     try {
+      // Blacklist the refresh token on the server
       await apiService.logout();
-      setUser(null);
-    } catch (error) {
-      console.error('Logout failed:', error);
+    } catch { /* storage is already cleared inside apiService.logout() */ }
+    finally {
       setUser(null);
     }
-  };
+  }, []);
 
-  const refreshUser = async () => {
+  const refreshUser = useCallback(async (): Promise<void> => {
     await checkAuth();
-  };
+  }, [checkAuth]);
 
-  const value: AuthContextType = {
-    user,
-    loading,
-    login,
-    register,
-    logout,
-    refreshUser,
-  };
+  // ── Value ───────────────────────────────────────────────────────────────────
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider value={{ user, loading, login, register, logout, refreshUser }}>
+      {children}
+    </AuthContext.Provider>
+  );
 };
 
 export default AuthContext;
