@@ -1,15 +1,15 @@
-// screens/Auth/LoginScreen.tsx
+// src/screens/Auth/LoginScreen.tsx
 import React, { useState } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, StyleSheet,
   KeyboardAvoidingView, Platform, ScrollView, ActivityIndicator, Alert,
+  Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { Path } from 'react-native-svg';
-import { Image } from 'react-native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { AuthStackParamList } from '../../types/navigation';
-// import { useAuth } from '../../contexts/AuthContext';  // ← uncomment when wiring API
+import { useAuth } from '../../contexts/AuthContext';
 
 type LoginNavProp = NativeStackNavigationProp<AuthStackParamList, 'Login'>;
 
@@ -17,18 +17,22 @@ interface Props {
   navigation: LoginNavProp;
 }
 
+// ── Colour palette (matches Register screen) ───────────────────────────────────
 const C = {
-  primary:  '#1378e5',
-  white:    '#ffffff',
-  bg:       '#f5f8ff',
-  border:   '#e2eaf5',
-  text:     '#1a2340',
-  sub:      '#5a6a85',
-  muted:    '#8898aa',
-  red:      '#ef4444',
-  inputBg:  '#f3f6fc',
+  primary: '#1378e5',
+  white:   '#ffffff',
+  bg:      '#f5f8ff',
+  border:  '#e2eaf5',
+  text:    '#1a2340',
+  sub:     '#5a6a85',
+  muted:   '#8898aa',
+  red:     '#ef4444',
+  inputBg: '#f3f6fc',
 };
+
 const ETTA_LOGO = require('../../../assets/images/etta-logo.png');
+
+// ── Inline SVG icons ───────────────────────────────────────────────────────────
 
 const UserIcon = ({ color = C.muted }: { color?: string }) => (
   <Svg width={18} height={18} viewBox="0 0 24 24">
@@ -51,16 +55,18 @@ const EyeIcon = ({ visible, color = C.muted }: { visible: boolean; color?: strin
   </Svg>
 );
 
+// ── Component ──────────────────────────────────────────────────────────────────
+
 export default function LoginScreen({ navigation }: Props) {
+  const { login } = useAuth();
+
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [showPass, setShowPass] = useState(false);
   const [loading,  setLoading]  = useState(false);
   const [errors,   setErrors]   = useState<{ username?: string; password?: string }>({});
 
-  // const { login } = useAuth();  // ← uncomment when wiring API
-
-  const validate = () => {
+  const validate = (): boolean => {
     const e: typeof errors = {};
     if (!username.trim()) e.username = 'Username is required';
     if (!password)        e.password = 'Password is required';
@@ -72,15 +78,17 @@ export default function LoginScreen({ navigation }: Props) {
     if (!validate()) return;
     setLoading(true);
     try {
-      // ── Wire real auth here ──────────────────────────────────────────────
-      // await login({ username, password });
-      // ────────────────────────────────────────────────────────────────────
+      await login({ username, password });
 
-      // Navigate to Main tabs: dismiss the Auth modal, land on Home tab.
-      // navigation.getParent() walks up to the root Stack from inside AuthNavigator.
-      navigation.getParent()?.navigate('Main', { screen: 'Home' } as any);
-    } catch (err: any) {
-      Alert.alert('Login Failed', err.message ?? 'Invalid credentials');
+      // After a successful login the Auth context sets `user`, which causes
+      // AppNavigator to re-render and swap the root screen to "Main"
+      // automatically.  But if the Auth stack is presented as a modal (as in
+      // AppNavigator), we also dismiss it programmatically so navigation
+      // doesn't get stuck.
+      navigation.getParent()?.navigate('Main', { screen: 'Home' } as never);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Invalid credentials';
+      Alert.alert('Login Failed', msg);
     } finally {
       setLoading(false);
     }
@@ -88,15 +96,23 @@ export default function LoginScreen({ navigation }: Props) {
 
   return (
     <SafeAreaView style={styles.safe}>
-      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
-        <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
-
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      >
+        <ScrollView
+          contentContainerStyle={styles.scroll}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+        >
+          {/* Header */}
           <View style={styles.header}>
             <Image source={ETTA_LOGO} style={styles.logo} resizeMode="contain" />
             <Text style={styles.appName}>Etha-Atlantic</Text>
             <Text style={styles.appSub}>Memorial Hospital</Text>
           </View>
 
+          {/* Card */}
           <View style={styles.card}>
             <Text style={styles.cardTitle}>Welcome Back!</Text>
             <Text style={styles.cardSub}>Sign in to access your health portal</Text>
@@ -111,6 +127,7 @@ export default function LoginScreen({ navigation }: Props) {
                   placeholder="Enter your username"
                   placeholderTextColor={C.muted}
                   autoCapitalize="none"
+                  autoCorrect={false}
                   value={username}
                   onChangeText={v => { setUsername(v); setErrors(e => ({ ...e, username: undefined })); }}
                 />
@@ -144,9 +161,14 @@ export default function LoginScreen({ navigation }: Props) {
 
             <TouchableOpacity
               style={[styles.primaryBtn, loading && styles.primaryBtnDisabled]}
-              onPress={handleLogin} activeOpacity={0.85} disabled={loading}
+              onPress={handleLogin}
+              activeOpacity={0.85}
+              disabled={loading}
             >
-              {loading ? <ActivityIndicator color={C.white} /> : <Text style={styles.primaryBtnText}>SIGN IN</Text>}
+              {loading
+                ? <ActivityIndicator color={C.white} />
+                : <Text style={styles.primaryBtnText}>SIGN IN</Text>
+              }
             </TouchableOpacity>
 
             <View style={styles.dividerRow}>
@@ -175,12 +197,14 @@ export default function LoginScreen({ navigation }: Props) {
   );
 }
 
+// ── Styles (unchanged from original) ─────────────────────────────────────────
+
 const styles = StyleSheet.create({
   safe:   { flex: 1, backgroundColor: C.bg },
   scroll: { flexGrow: 1, paddingHorizontal: 20, paddingBottom: 32 },
 
   header: { alignItems: 'center', paddingTop: 36, paddingBottom: 24, gap: 6 },
-  logo: { width: 92, height: 92 },
+  logo:   { width: 92, height: 92 },
   appName: { fontSize: 22, fontWeight: '800', color: C.text, marginTop: 10 },
   appSub:  { fontSize: 13, color: C.sub, letterSpacing: 0.3 },
 
@@ -193,7 +217,10 @@ const styles = StyleSheet.create({
   cardSub:   { fontSize: 13, color: C.sub, marginBottom: 24 },
 
   fieldGroup: { marginBottom: 14 },
-  fieldLabel: { fontSize: 12, fontWeight: '700', color: C.sub, marginBottom: 6, letterSpacing: 0.4, textTransform: 'uppercase' },
+  fieldLabel: {
+    fontSize: 12, fontWeight: '700', color: C.sub, marginBottom: 6,
+    letterSpacing: 0.4, textTransform: 'uppercase',
+  },
   inputRow: {
     flexDirection: 'row', alignItems: 'center', gap: 10,
     backgroundColor: C.inputBg, borderRadius: 12,
@@ -201,8 +228,8 @@ const styles = StyleSheet.create({
     borderWidth: 1.5, borderColor: C.border,
   },
   inputError: { borderColor: C.red },
-  input: { flex: 1, fontSize: 14, color: C.text, paddingVertical: 0 },
-  errorText: { fontSize: 11, color: C.red, marginTop: 4, marginLeft: 2 },
+  input:      { flex: 1, fontSize: 14, color: C.text, paddingVertical: 0 },
+  errorText:  { fontSize: 11, color: C.red, marginTop: 4, marginLeft: 2 },
 
   forgotWrap: { alignSelf: 'flex-end', marginBottom: 20, marginTop: -4 },
   forgotText: { fontSize: 12, color: C.primary, fontWeight: '600' },
@@ -220,9 +247,12 @@ const styles = StyleSheet.create({
   dividerLine: { flex: 1, height: 1, backgroundColor: C.border },
   dividerText: { fontSize: 12, color: C.muted, fontWeight: '600' },
 
-  secondaryBtn: { borderWidth: 1.5, borderColor: C.primary, borderRadius: 14, paddingVertical: 15, alignItems: 'center' },
+  secondaryBtn: {
+    borderWidth: 1.5, borderColor: C.primary, borderRadius: 14,
+    paddingVertical: 15, alignItems: 'center',
+  },
   secondaryBtnText: { color: C.primary, fontWeight: '800', fontSize: 14, letterSpacing: 1 },
 
-  footer: { textAlign: 'center', fontSize: 11, color: C.muted, marginTop: 20 },
+  footer:     { textAlign: 'center', fontSize: 11, color: C.muted, marginTop: 20 },
   footerLink: { color: C.primary, fontWeight: '600' },
 });

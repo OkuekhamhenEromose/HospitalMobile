@@ -1,3 +1,7 @@
+// src/navigation/AppNavigator.tsx
+// Key change: reads auth state at startup to decide the initial screen.
+// If the user has a valid stored token they land on Main tabs, not Welcome.
+
 import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
@@ -6,15 +10,15 @@ import Svg, { Path } from 'react-native-svg';
 import { useAuth } from '../contexts/AuthContext';
 import LoadingSpinner from '../components/common/LoadingSpinner';
 
-import WelcomeScreen  from '../screens/Welcome/WelcomeScreen';
-import HomeScreen     from '../screens/Home/HomeScreen';
-import AboutScreen    from '../screens/About/AboutScreen';
-import ServicesScreen from '../screens/Services/ServicesScreen';
-import BlogListScreen from '../screens/Blog/BlogListScreen';
-import ContactScreen  from '../screens/Contact/ContactScreen';
+import WelcomeScreen   from '../screens/Welcome/WelcomeScreen';
+import HomeScreen      from '../screens/Home/HomeScreen';
+import AboutScreen     from '../screens/About/AboutScreen';
+import ServicesScreen  from '../screens/Services/ServicesScreen';
+import BlogListScreen  from '../screens/Blog/BlogListScreen';
+import ContactScreen   from '../screens/Contact/ContactScreen';
 import DashboardScreen from '../screens/Dashboard/DashboardScreen';
-import LoginScreen    from '../screens/Auth/LoginScreen';
-import RegisterScreen from '../screens/Auth/RegisterScreen';
+import LoginScreen     from '../screens/Auth/LoginScreen';
+import RegisterScreen  from '../screens/Auth/RegisterScreen';
 
 import type {
   RootStackParamList,
@@ -79,9 +83,9 @@ const TAB_ICONS: Record<TabIconName, React.FC<{ color: string; size: number }>> 
   Blog: BlogIcon, Contact: ContactIcon, Dashboard: DashboardIcon,
 };
 
-// ─── Auth navigator (Login + Register) ───────────────────────────────────────
+// ─── Auth navigator ───────────────────────────────────────────────────────────
 
-const AuthNavigator = () => (
+const AuthNavigator: React.FC = () => (
   <AuthStack.Navigator screenOptions={{ headerShown: false }}>
     <AuthStack.Screen name="Login"    component={LoginScreen} />
     <AuthStack.Screen name="Register" component={RegisterScreen} />
@@ -90,7 +94,7 @@ const AuthNavigator = () => (
 
 // ─── Main bottom tabs ─────────────────────────────────────────────────────────
 
-const MainTabs = () => {
+const MainTabs: React.FC = () => {
   const { user } = useAuth();
   return (
     <Tab.Navigator
@@ -104,11 +108,12 @@ const MainTabs = () => {
         },
       })}
     >
-      <Tab.Screen name="Home"      component={HomeScreen} />
-      <Tab.Screen name="About"     component={AboutScreen} />
-      <Tab.Screen name="Services"  component={ServicesScreen} />
-      <Tab.Screen name="Blog"      component={BlogListScreen} />
-      <Tab.Screen name="Contact"   component={ContactScreen} />
+      <Tab.Screen name="Home"     component={HomeScreen} />
+      <Tab.Screen name="About"    component={AboutScreen} />
+      <Tab.Screen name="Services" component={ServicesScreen} />
+      <Tab.Screen name="Blog"     component={BlogListScreen} />
+      <Tab.Screen name="Contact"  component={ContactScreen} />
+      {/* Dashboard tab is only visible when logged in */}
       <Tab.Screen
         name="Dashboard"
         component={DashboardScreen}
@@ -120,18 +125,26 @@ const MainTabs = () => {
 
 // ─── Root navigator ───────────────────────────────────────────────────────────
 
-const AppNavigator = () => {
-  const { loading } = useAuth();
+const AppNavigator: React.FC = () => {
+  const { loading, user } = useAuth();
+
+  // Show a loading screen while the stored token / user data is being read
   if (loading) return <LoadingSpinner message="Loading..." />;
 
   return (
     <NavigationContainer>
-      <Stack.Navigator screenOptions={{ headerShown: false }}>
-        {/* 1️⃣  Welcome — shown on every cold start */}
+      <Stack.Navigator
+        screenOptions={{ headerShown: false }}
+        // If the user is already authenticated, skip the Welcome screen
+        initialRouteName={user ? 'Main' : 'Welcome'}
+      >
+        {/* Public screens */}
         <Stack.Screen name="Welcome" component={WelcomeScreen} />
-        {/* 2️⃣  Main tabs — destination after login */}
-        <Stack.Screen name="Main"    component={MainTabs} />
-        {/* 3️⃣  Auth modal — Login / Register */}
+
+        {/* Main app (tabs) */}
+        <Stack.Screen name="Main" component={MainTabs} />
+
+        {/* Auth modal — Login / Register */}
         <Stack.Screen
           name="Auth"
           component={AuthNavigator}

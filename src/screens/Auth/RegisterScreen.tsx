@@ -1,22 +1,24 @@
-// screens/Auth/RegisterScreen.tsx
+// src/screens/Auth/RegisterScreen.tsx
 import React, { useState } from 'react';
 import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  StyleSheet,
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-  ActivityIndicator,
-  Alert,
-  Image,
+  View, Text, TextInput, TouchableOpacity, StyleSheet,
+  KeyboardAvoidingView, Platform, ScrollView, ActivityIndicator,
+  Alert, Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { Path, Circle } from 'react-native-svg';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import type { AuthStackParamList } from '../../types/navigation';
+import { useAuth } from '../../contexts/AuthContext';
+import type { RegisterData, Role, Gender } from '../../types';
 
-// ── colour tokens ─────────────────────────────────────────────────────────────
+type RegisterNavProp = NativeStackNavigationProp<AuthStackParamList, 'Register'>;
+
+interface Props {
+  navigation: RegisterNavProp;
+}
+
+// ── Colour palette ─────────────────────────────────────────────────────────────
 const C = {
   primary:   '#1378e5',
   primaryDk: '#0f5bbf',
@@ -33,10 +35,8 @@ const C = {
 
 const ETTA_LOGO = require('../../../assets/images/etta-logo.png');
 
-// ── RBAC roles ────────────────────────────────────────────────────────────────
-type Role = 'PATIENT' | 'DOCTOR' | 'NURSE' | 'LAB' | 'ADMIN';
-
 // ── Role SVG icons ────────────────────────────────────────────────────────────
+
 const PatientIcon = ({ color }: { color: string }) => (
   <Svg width={22} height={22} viewBox="0 0 64 64">
     <Path fill={color} d="M29.905 11.078a5.225 5.225 0 0 0 5.616-4.789A5.23 5.23 0 0 0 30.725.673a5.22 5.22 0 0 0-5.614 4.792a5.22 5.22 0 0 0 4.794 5.614zm1.431 10.461a3.516 3.516 0 0 1 2.852 3.464a3.53 3.53 0 0 1-3.528 3.528H19.228a2.24 2.24 0 0 1-2.074-3.088l1.236-2.885l13.766-9.86h-6.559c-2.519-.07-4.289.805-5.304 2.789c-.688 1.335-4.342 9.498-4.342 9.498a3.528 3.528 0 0 0 3.278 4.836h4.465l-1.317 8.66l-6.93 20.026a3.37 3.37 0 1 0 6.402 2.113l7.969-22.59c1.554 2.525 4.647 7.051 5.173 7.906c.121 1.421 1.234 13.948 1.234 13.948a3.374 3.374 0 0 0 3.657 3.059a3.37 3.37 0 0 0 3.059-3.657l-1.31-14.743a3.3 3.3 0 0 0-.49-1.471l-5.729-9.285l.912-11.653s1.357 4.611 1.458 4.944c.291.952.947 1.635 1.62 2.18c.394.314 7.081 4.865 7.081 4.865c.372.172.676.323 1.075.35a2.35 2.35 0 0 0 2.533-2.158a2.37 2.37 0 0 0-.92-2.061s-6.663-4.575-6.934-4.774a1.4 1.4 0 0 1-.439-.61l-2.637-9.498c-.429-1.437-1.877-2.673-3.708-2.673h-.789z" />
@@ -74,15 +74,8 @@ const AdminIcon = ({ color }: { color: string }) => (
   </Svg>
 );
 
-const ROLES: { key: Role; label: string; Icon: React.FC<{ color: string }> }[] = [
-  { key: 'PATIENT', label: 'Patient',       Icon: PatientIcon },
-  { key: 'DOCTOR',  label: 'Doctor',        Icon: DoctorIcon  },
-  { key: 'NURSE',   label: 'Nurse',         Icon: NurseIcon   },
-  { key: 'LAB',     label: 'Lab Scientist', Icon: LabIcon     },
-  { key: 'ADMIN',   label: 'Admin',         Icon: AdminIcon   },
-];
+// ── Field icons ───────────────────────────────────────────────────────────────
 
-// ── Inline SVG field icons ────────────────────────────────────────────────────
 const UserIcon = ({ color = C.muted }: { color?: string }) => (
   <Svg width={18} height={18} viewBox="0 0 24 24">
     <Path fill={color} d="M12 12a5 5 0 1 0 0-10 5 5 0 0 0 0 10m0 2c-5.33 0-8 2.67-8 4v1h16v-1c0-1.33-2.67-4-8-4" />
@@ -117,23 +110,34 @@ const EyeIcon = ({ visible, color = C.muted }: { visible: boolean; color?: strin
   </Svg>
 );
 
-// ── Form state ────────────────────────────────────────────────────────────────
+// ── Role chips config ──────────────────────────────────────────────────────────
+
+const ROLES: { key: Role; label: string; Icon: React.FC<{ color: string }> }[] = [
+  { key: 'PATIENT', label: 'Patient',       Icon: PatientIcon },
+  { key: 'DOCTOR',  label: 'Doctor',        Icon: DoctorIcon  },
+  { key: 'NURSE',   label: 'Nurse',         Icon: NurseIcon   },
+  { key: 'LAB',     label: 'Lab Scientist', Icon: LabIcon     },
+  { key: 'ADMIN',   label: 'Admin',         Icon: AdminIcon   },
+];
+
+// ── Form state type (aligned with RegisterData) ───────────────────────────────
+
 interface FormState {
   fullname:  string;
   username:  string;
   email:     string;
   phone:     string;
-  gender:    'M' | 'F' | 'O' | '';
+  gender:    Gender | '';
   role:      Role;
   password1: string;
   password2: string;
 }
 
-interface RegisterScreenProps {
-  navigation?: any;
-}
+// ── Component ──────────────────────────────────────────────────────────────────
 
-export default function RegisterScreen({ navigation }: RegisterScreenProps) {
+export default function RegisterScreen({ navigation }: Props) {
+  const { register } = useAuth();
+
   const [form, setForm] = useState<FormState>({
     fullname:  '',
     username:  '',
@@ -154,7 +158,7 @@ export default function RegisterScreen({ navigation }: RegisterScreenProps) {
     setErrors(e => ({ ...e, [key]: undefined }));
   };
 
-  const validate = () => {
+  const validate = (): boolean => {
     const e: typeof errors = {};
     if (!form.fullname.trim())  e.fullname  = 'Full name is required';
     if (!form.username.trim())  e.username  = 'Username is required';
@@ -171,14 +175,31 @@ export default function RegisterScreen({ navigation }: RegisterScreenProps) {
     if (!validate()) return;
     setLoading(true);
     try {
-      Alert.alert('Registration', `Account for ${form.fullname} (${form.role}) — wire up API here.`);
-      navigation?.navigate?.('Login');
-    } catch (err: any) {
-      Alert.alert('Registration Failed', err.message ?? 'Something went wrong');
+      const payload: RegisterData = {
+        username:  form.username,
+        email:     form.email,
+        password1: form.password1,
+        password2: form.password2,
+        fullname:  form.fullname,
+        role:      form.role,
+        ...(form.phone  ? { phone:  form.phone }             : {}),
+        ...(form.gender ? { gender: form.gender as Gender }  : {}),
+      };
+
+      // register() in AuthContext creates account + auto-logs in
+      await register(payload);
+
+      // Auth state update triggers AppNavigator to switch to Main automatically
+      navigation.getParent()?.navigate('Main', { screen: 'Home' } as never);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Registration failed';
+      Alert.alert('Registration Failed', msg);
     } finally {
       setLoading(false);
     }
   };
+
+  // ── Field builder ─────────────────────────────────────────────────────────
 
   const field = (
     label: string,
@@ -186,8 +207,8 @@ export default function RegisterScreen({ navigation }: RegisterScreenProps) {
     opts: {
       icon: React.ReactNode;
       placeholder: string;
-      keyboardType?: any;
-      autoCapitalize?: any;
+      keyboardType?: 'default' | 'email-address' | 'phone-pad';
+      autoCapitalize?: 'none' | 'words' | 'sentences' | 'characters';
       secure?: boolean;
       onEye?: () => void;
       eyeVisible?: boolean;
@@ -203,6 +224,7 @@ export default function RegisterScreen({ navigation }: RegisterScreenProps) {
           placeholderTextColor={C.muted}
           keyboardType={opts.keyboardType ?? 'default'}
           autoCapitalize={opts.autoCapitalize ?? 'words'}
+          autoCorrect={false}
           secureTextEntry={opts.secure && !opts.eyeVisible}
           value={form[key] as string}
           onChangeText={set(key)}
@@ -216,6 +238,8 @@ export default function RegisterScreen({ navigation }: RegisterScreenProps) {
       {errors[key] && <Text style={styles.errorText}>{errors[key]}</Text>}
     </View>
   );
+
+  // ── Render ────────────────────────────────────────────────────────────────
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -235,7 +259,7 @@ export default function RegisterScreen({ navigation }: RegisterScreenProps) {
           {/* Card */}
           <View style={styles.card}>
 
-            {/* ── Role picker ── */}
+            {/* Role picker */}
             <Text style={styles.fieldLabel}>I am a…</Text>
             <ScrollView
               horizontal
@@ -245,7 +269,6 @@ export default function RegisterScreen({ navigation }: RegisterScreenProps) {
             >
               {ROLES.map(({ key, label, Icon }) => {
                 const active = form.role === key;
-                const iconColor = active ? C.primary : C.muted;
                 return (
                   <TouchableOpacity
                     key={key}
@@ -253,7 +276,7 @@ export default function RegisterScreen({ navigation }: RegisterScreenProps) {
                     onPress={() => setForm(f => ({ ...f, role: key }))}
                     activeOpacity={0.7}
                   >
-                    <Icon color={iconColor} />
+                    <Icon color={active ? C.primary : C.muted} />
                     <Text style={[styles.roleLabel, active && styles.roleLabelActive]}>
                       {label}
                     </Text>
@@ -334,9 +357,9 @@ export default function RegisterScreen({ navigation }: RegisterScreenProps) {
               }
             </TouchableOpacity>
 
-            {/* Sign in link */}
+            {/* Sign-in link */}
             <TouchableOpacity
-              onPress={() => navigation?.navigate?.('Login')}
+              onPress={() => navigation.navigate('Login')}
               activeOpacity={0.7}
               style={styles.loginRow}
             >
@@ -359,6 +382,7 @@ export default function RegisterScreen({ navigation }: RegisterScreenProps) {
 }
 
 // ── Styles ────────────────────────────────────────────────────────────────────
+
 const styles = StyleSheet.create({
   safe:   { flex: 1, backgroundColor: C.bg },
   scroll: { flexGrow: 1, paddingHorizontal: 20, paddingBottom: 36 },
@@ -369,41 +393,25 @@ const styles = StyleSheet.create({
   cardSub:   { fontSize: 13, color: C.sub, textAlign: 'center', lineHeight: 20 },
 
   card: {
-    backgroundColor: C.white,
-    borderRadius: 24,
-    padding: 24,
-    shadowColor: '#1378e5',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.08,
-    shadowRadius: 24,
-    elevation: 6,
+    backgroundColor: C.white, borderRadius: 24, padding: 24,
+    shadowColor: '#1378e5', shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.08, shadowRadius: 24, elevation: 6,
   },
 
-  // Role chips
-  roleScroll: { gap: 8, paddingBottom: 2 },
+  roleScroll:      { gap: 8, paddingBottom: 2 },
   roleChip: {
-    alignItems: 'center',
-    paddingVertical: 10,
-    paddingHorizontal: 14,
-    borderRadius: 14,
-    borderWidth: 1.5,
-    borderColor: C.border,
-    backgroundColor: C.inputBg,
-    minWidth: 76,
-    gap: 6,
+    alignItems: 'center', paddingVertical: 10, paddingHorizontal: 14,
+    borderRadius: 14, borderWidth: 1.5, borderColor: C.border,
+    backgroundColor: C.inputBg, minWidth: 76, gap: 6,
   },
-  roleChipActive: {
-    borderColor: C.primary,
-    backgroundColor: '#eff6ff',
-  },
+  roleChipActive:  { borderColor: C.primary, backgroundColor: '#eff6ff' },
   roleLabel:       { fontSize: 11, fontWeight: '600', color: C.sub,     textAlign: 'center' },
   roleLabelActive: { fontSize: 11, fontWeight: '600', color: C.primary, textAlign: 'center' },
 
-  // Fields
   fieldGroup: { marginBottom: 14 },
   fieldLabel: {
-    fontSize: 11, fontWeight: '700', color: C.sub,
-    marginBottom: 6, letterSpacing: 0.5, textTransform: 'uppercase',
+    fontSize: 11, fontWeight: '700', color: C.sub, marginBottom: 6,
+    letterSpacing: 0.5, textTransform: 'uppercase',
   },
   inputRow: {
     flexDirection: 'row', alignItems: 'center', gap: 10,
@@ -412,11 +420,10 @@ const styles = StyleSheet.create({
     borderWidth: 1.5, borderColor: C.border,
   },
   inputError: { borderColor: C.red },
-  input: { flex: 1, fontSize: 14, color: C.text, paddingVertical: 0 },
-  errorText: { fontSize: 11, color: C.red, marginTop: 4, marginLeft: 2 },
+  input:      { flex: 1, fontSize: 14, color: C.text, paddingVertical: 0 },
+  errorText:  { fontSize: 11, color: C.red, marginTop: 4, marginLeft: 2 },
 
-  // Gender
-  genderRow: { flexDirection: 'row', gap: 8 },
+  genderRow:        { flexDirection: 'row', gap: 8 },
   genderBtn: {
     flex: 1, paddingVertical: 12, borderRadius: 12,
     borderWidth: 1.5, borderColor: C.border,
@@ -426,7 +433,6 @@ const styles = StyleSheet.create({
   genderLabel:       { fontSize: 13, fontWeight: '600', color: C.sub },
   genderLabelActive: { fontSize: 13, fontWeight: '600', color: C.primary },
 
-  // CTA
   primaryBtn: {
     backgroundColor: C.primary, borderRadius: 14,
     paddingVertical: 16, alignItems: 'center', marginTop: 8,
@@ -440,6 +446,6 @@ const styles = StyleSheet.create({
   loginHint: { fontSize: 13, color: C.muted },
   loginLink: { color: C.primary, fontWeight: '700' },
 
-  footer: { textAlign: 'center', fontSize: 11, color: C.muted, marginTop: 18 },
+  footer:     { textAlign: 'center', fontSize: 11, color: C.muted, marginTop: 18 },
   footerLink: { color: C.primary, fontWeight: '600' },
 });
