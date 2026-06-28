@@ -159,12 +159,12 @@ const ALL_CATEGORY: BlogCategory = { id: 0, name: 'All', slug: '', post_count: 0
 // ── Category icon map ─────────────────────────────────────────────────────────
 function getCategoryIcon(name: string): { icon?: string; SvgIcon?: React.FC<{ color: string; size: number }> } {
   const n = name.toLowerCase();
-  if (n.includes('mental'))    return { SvgIcon: MentalWellnessIcon };
-  if (n.includes('general'))   return { icon: 'medical-outline' };
+  if (n.includes('mental'))     return { SvgIcon: MentalWellnessIcon };
+  if (n.includes('general'))    return { icon: 'medical-outline' };
   if (n.includes('preventive')) return { icon: 'shield-checkmark-outline' };
   if (n.includes('med') || n.includes('update')) return { icon: 'newspaper-outline' };
   if (n.includes('healthy') || n.includes('living')) return { icon: 'leaf-outline' };
-  if (n.includes('women'))     return { icon: 'heart-outline' };
+  if (n.includes('women'))      return { icon: 'heart-outline' };
   return { icon: 'grid-outline' };
 }
 
@@ -190,26 +190,82 @@ function readTime(post: BlogPost): string {
   return `${mins} min read`;
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
+// ── Infinite-carousel helpers (mirrors HomeScreen strategy exactly) ───────────
+//
+// We build a large repeated array from whatever posts come back from the API.
+// The FlatList starts in the middle of this array so the user can never swipe
+// to either end in a normal session. The auto-timer uses modulo so it never
+// requests an out-of-range index. onMomentumScrollEnd keeps the ref honest
+// after manual swipes.
+//
+// REPEAT = 100 means we get REAL_COUNT × 200 slots total — same ratio as
+// HomeScreen. If posts change (category switch / refresh) we rebuild the
+// array and reset the carousel to the new midpoint.
+
+const CAROUSEL_REPEAT = 100;
+
+function buildCarouselData(posts: BlogPost[]) {
+  if (posts.length === 0) return { data: [] as BlogPost[], total: 0, start: 0 };
+  const total = posts.length * CAROUSEL_REPEAT * 2;
+  const start = Math.floor(total / 2);
+  const data  = Array.from({ length: total }, (_, i) => posts[i % posts.length]);
+  return { data, total, start };
+}
+
+// ── Props ─────────────────────────────────────────────────────────────────────
 interface BlogScreenProps { navigation?: any; }
 
+// ─────────────────────────────────────────────────────────────────────────────
 export default function BlogScreen({ navigation }: BlogScreenProps) {
   const { logout } = useAuth();
 
   // ── State ──────────────────────────────────────────────────────────────────
   const [posts,       setPosts]       = useState<BlogPost[]>([]);
   const [categories,  setCategories]  = useState<BlogCategory[]>([ALL_CATEGORY]);
-  const [activeTab,   setActiveTab]   = useState(0);        // index into categories[]
+  const [activeTab,   setActiveTab]   = useState(0);
   const [search,      setSearch]      = useState('');
   const [loading,     setLoading]     = useState(true);
   const [refreshing,  setRefreshing]  = useState(false);
   const [signingOut,  setSigningOut]  = useState(false);
   const [expanded,    setExpanded]    = useState<Record<string, boolean>>({});
 
-  // Carousel refs
-  const carouselRef     = useRef<FlatList>(null);
-  const carouselIndex   = useRef(0);
-  const carouselData    = posts.length ? posts : [];
+  // ── Carousel refs (index lives in CAROUSEL_DATA space, not posts space) ───
+  const carouselRef      = useRef<FlatList>(null);
+  const carouselIndexRef = useRef(0);
+
+  // Derived carousel data — rebuilt whenever posts change
+  const { data: carouselData, total: carouselTotal, start: carouselStart } =
+    buildCarouselData(posts);
+
+  // ── Scroll carousel to new midpoint whenever posts are replaced ───────────
+  //
+  // We use a layout-effect-style trick: after carouselData is rebuilt we
+  // scroll without animation (instant jump to midpoint) so there is never
+  // a visible flash. Because the data array changed, the FlatList resets its
+  // own scroll position anyway — we just make sure our ref agrees.
+  const prevPostsLenRef = useRef(0);
+  useEffect(() => {
+    if (carouselData.length === 0) return;
+    if (prevPostsLenRef.current !== posts.length) {
+      prevPostsLenRef.current = posts.length;
+      carouselIndexRef.current = carouselStart;
+      // Small timeout lets the FlatList finish its layout pass before we scroll
+      setTimeout(() => {
+        carouselRef.current?.scrollToIndex({ index: carouselStart, animated: false });
+      }, 50);
+    }
+  }, [carouselData.length, carouselStart, posts.length]);
+
+  // ── Auto-advance: modulo clamp — never exceeds carouselTotal - 1 ─────────
+  useEffect(() => {
+    if (carouselTotal < 2) return;
+    const timer = setInterval(() => {
+      const next = (carouselIndexRef.current + 1) % carouselTotal;
+      carouselIndexRef.current = next;
+      carouselRef.current?.scrollToIndex({ index: next, animated: true });
+    }, 4000);
+    return () => clearInterval(timer);
+  }, [carouselTotal]);
 
   // ── Load categories ────────────────────────────────────────────────────────
   const loadCategories = useCallback(async () => {
@@ -254,17 +310,6 @@ export default function BlogScreen({ navigation }: BlogScreenProps) {
     const slug = categories[activeTab]?.slug ?? '';
     loadPosts(slug || undefined);
   };
-
-  // ── Auto-advance carousel ─────────────────────────────────────────────────
-  useEffect(() => {
-    if (carouselData.length < 2) return;
-    const timer = setInterval(() => {
-      const next = (carouselIndex.current + 1) % carouselData.length;
-      carouselIndex.current = next;
-      carouselRef.current?.scrollToIndex({ index: next, animated: true });
-    }, 4000);
-    return () => clearInterval(timer);
-  }, [carouselData.length]);
 
   // ── Sign-out ──────────────────────────────────────────────────────────────
   const handleSignOut = () => {
@@ -409,7 +454,7 @@ export default function BlogScreen({ navigation }: BlogScreenProps) {
 
   // ── Empty / loading state ─────────────────────────────────────────────────
   const renderEmpty = () => {
-    if (loading) return null; // skeleton handled by ListHeaderComponent loader
+    if (loading) return null;
     return (
       <View style={s.empty}>
         <Text style={{ fontSize: 38 }}>🔍</Text>
@@ -444,7 +489,7 @@ export default function BlogScreen({ navigation }: BlogScreenProps) {
         ListEmptyComponent={renderEmpty}
         ListHeaderComponent={(
           <>
-            {/* ══ HERO CAROUSEL ════════════════════════════════════════════ */}
+            {/* ══ HERO CAROUSEL — flash-free infinite loop ════════════════ */}
             <SafeAreaView style={s.heroSafeArea}>
               <View>
                 {carouselData.length > 0 ? (
@@ -455,13 +500,22 @@ export default function BlogScreen({ navigation }: BlogScreenProps) {
                     horizontal
                     pagingEnabled
                     showsHorizontalScrollIndicator={false}
-                    getItemLayout={(_, index) => ({ length: width, offset: width * index, index })}
+                    // initialScrollIndex requires getItemLayout to be defined
+                    initialScrollIndex={carouselStart}
+                    getItemLayout={(_, index) => ({
+                      length: width,
+                      offset: width * index,
+                      index,
+                    })}
+                    // Only keep prev + current + next in memory
                     windowSize={3}
                     removeClippedSubviews
-                    renderItem={renderCarouselSlide}
+                    // Keep ref in sync when user swipes manually
                     onMomentumScrollEnd={e => {
-                      carouselIndex.current = Math.round(e.nativeEvent.contentOffset.x / width);
+                      const idx = Math.round(e.nativeEvent.contentOffset.x / width);
+                      carouselIndexRef.current = idx;
                     }}
+                    renderItem={renderCarouselSlide}
                   />
                 ) : (
                   <View style={[h.slide, { justifyContent: 'center', alignItems: 'center' }]}>
