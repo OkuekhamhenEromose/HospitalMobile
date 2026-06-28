@@ -1,6 +1,4 @@
 // src/navigation/AppNavigator.tsx
-// Key change: reads auth state at startup to decide the initial screen.
-// If the user has a valid stored token they land on Main tabs, not Welcome.
 
 import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
@@ -71,19 +69,13 @@ const ContactIcon = ({ color, size }: { color: string; size: number }) => (
   </Svg>
 );
 
-const DashboardIcon = ({ color, size }: { color: string; size: number }) => (
-  <Svg width={size} height={size} viewBox="0 0 24 24">
-    <Path fill={color} d="M3 3h8v8H3zm0 10h8v8H3zM13 3h8v8h-8zm0 10h8v8h-8z" />
-  </Svg>
-);
-
-type TabIconName = 'Home' | 'About' | 'Services' | 'Blog' | 'Contact' | 'Dashboard';
+type TabIconName = 'Home' | 'About' | 'Services' | 'Blog' | 'Contact';
 const TAB_ICONS: Record<TabIconName, React.FC<{ color: string; size: number }>> = {
   Home: HomeIcon, About: AboutIcon, Services: ServicesIcon,
-  Blog: BlogIcon, Contact: ContactIcon, Dashboard: DashboardIcon,
+  Blog: BlogIcon, Contact: ContactIcon,
 };
 
-// ─── Auth navigator ───────────────────────────────────────────────────────────
+// ─── Auth navigator (Login + Register) ───────────────────────────────────────
 
 const AuthNavigator: React.FC = () => (
   <AuthStack.Navigator screenOptions={{ headerShown: false }}>
@@ -94,62 +86,63 @@ const AuthNavigator: React.FC = () => (
 
 // ─── Main bottom tabs ─────────────────────────────────────────────────────────
 
-const MainTabs: React.FC = () => {
-  const { user } = useAuth();
-  return (
-    <Tab.Navigator
-      screenOptions={({ route }) => ({
-        headerShown: false,
-        tabBarActiveTintColor:   '#1378e5',
-        tabBarInactiveTintColor: '#6b7280',
-        tabBarIcon: ({ color, size }) => {
-          const Icon = TAB_ICONS[route.name as TabIconName];
-          return Icon ? <Icon color={color} size={size} /> : null;
-        },
-      })}
-    >
-      <Tab.Screen name="Home"     component={HomeScreen} />
-      <Tab.Screen name="About"    component={AboutScreen} />
-      <Tab.Screen name="Services" component={ServicesScreen} />
-      <Tab.Screen name="Blog"     component={BlogListScreen} />
-      <Tab.Screen name="Contact"  component={ContactScreen} />
-      {/* Dashboard tab is only visible when logged in */}
-      <Tab.Screen
-        name="Dashboard"
-        component={DashboardScreen}
-        options={{ tabBarButton: user ? undefined : () => null }}
-      />
-    </Tab.Navigator>
-  );
-};
+const MainTabs: React.FC = () => (
+  <Tab.Navigator
+    screenOptions={({ route }) => ({
+      headerShown: false,
+      tabBarActiveTintColor:   '#1378e5',
+      tabBarInactiveTintColor: '#6b7280',
+      tabBarIcon: ({ color, size }) => {
+        const Icon = TAB_ICONS[route.name as TabIconName];
+        return Icon ? <Icon color={color} size={size} /> : null;
+      },
+    })}
+  >
+    <Tab.Screen name="Home"     component={HomeScreen} />
+    <Tab.Screen name="About"    component={AboutScreen} />
+    <Tab.Screen name="Services" component={ServicesScreen} />
+    <Tab.Screen name="Blog"     component={BlogListScreen} />
+    <Tab.Screen name="Contact"  component={ContactScreen} />
+
+    {/*
+      Dashboard is intentionally hidden from the tab bar.
+      It is still reachable via navigation.navigate('Dashboard'),
+      which is triggered by the Profile icon in HomeScreen.
+    */}
+    <Tab.Screen
+      name="Dashboard"
+      component={DashboardScreen}
+      options={{ tabBarButton: () => null, tabBarStyle: { display: 'none' } }}
+    />
+  </Tab.Navigator>
+);
 
 // ─── Root navigator ───────────────────────────────────────────────────────────
 
 const AppNavigator: React.FC = () => {
   const { loading, user } = useAuth();
 
-  // Show a loading screen while the stored token / user data is being read
   if (loading) return <LoadingSpinner message="Loading..." />;
 
   return (
     <NavigationContainer>
-      <Stack.Navigator
-        screenOptions={{ headerShown: false }}
-        // If the user is already authenticated, skip the Welcome screen
-        initialRouteName={user ? 'Main' : 'Welcome'}
-      >
-        {/* Public screens */}
-        <Stack.Screen name="Welcome" component={WelcomeScreen} />
-
-        {/* Main app (tabs) */}
-        <Stack.Screen name="Main" component={MainTabs} />
-
-        {/* Auth modal — Login / Register */}
-        <Stack.Screen
-          name="Auth"
-          component={AuthNavigator}
-          options={{ presentation: 'modal' }}
-        />
+      <Stack.Navigator screenOptions={{ headerShown: false }}>
+        {user ? (
+          // ── Authenticated ─────────────────────────────────────────────────
+          // Only Main is in the stack, so the user can never accidentally
+          // navigate back to the login screen while signed in.
+          <Stack.Screen name="Main" component={MainTabs} />
+        ) : (
+          // ── Unauthenticated ───────────────────────────────────────────────
+          // Auth is listed first so it becomes the initial screen.
+          // This means after logout the user lands directly on LoginScreen,
+          // not on Welcome. Welcome is still reachable (e.g. from a "Back"
+          // gesture or a "Take the tour" link on LoginScreen).
+          <>
+            <Stack.Screen name="Auth"    component={AuthNavigator} />
+            <Stack.Screen name="Welcome" component={WelcomeScreen} />
+          </>
+        )}
       </Stack.Navigator>
     </NavigationContainer>
   );

@@ -1,7 +1,4 @@
 // src/screens/Home/HomeScreen.tsx
-// Change from original: back arrow replaced with SignOut SVG icon.
-// Behaviour on press is identical — navigation.goBack() — leading back to the Auth/Sign-in screen.
-// No useAuth / AuthContext dependency (to be wired up later).
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
@@ -17,11 +14,14 @@ import {
   NativeScrollEvent,
   NativeSyntheticEvent,
   Linking,
+  Alert,
 } from 'react-native';
 import { MaterialIcons, Ionicons } from '@expo/vector-icons';
 import Svg, { Path, Circle } from 'react-native-svg';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { WebView } from 'react-native-webview';
+// ── NEW: wire up auth so Profile and SignOut icons work ────────────────────────
+import { useAuth } from '../../contexts/AuthContext';
 
 const { width } = Dimensions.get('window');
 
@@ -147,19 +147,57 @@ async function fetchLatestPost() {
 // ── Props ─────────────────────────────────────────────────────────────────────
 interface HomeScreenProps {
   navigation?: any;
-  onMenuPress?: () => void;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
 export default function HomeScreen({ navigation }: HomeScreenProps) {
+  // ── NEW: pull logout from auth context ──────────────────────────────────────
+  const { logout, user } = useAuth();
+
   const [activeIndex,   setActiveIndex]   = useState(0);
   const [aboutExpanded, setAboutExpanded] = useState(false);
   const [post,          setPost]          = useState<any>(null);
   const [loadingPost,   setLoadingPost]   = useState(true);
+  const [signingOut,    setSigningOut]    = useState(false);
 
   const flatListRef = useRef<FlatList>(null);
 
   const navigate = (route: string) => navigation?.navigate?.(route);
+
+  // ── NEW: sign-out handler ────────────────────────────────────────────────────
+  // Calls logout() which clears AsyncStorage tokens.
+  // AppNavigator's conditional rendering then automatically unmounts MainTabs
+  // and shows AuthNavigator (Login screen) because user becomes null.
+  const handleSignOut = () => {
+    Alert.alert(
+      'Sign Out',
+      'Are you sure you want to sign out?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Sign Out',
+          style: 'destructive',
+          onPress: async () => {
+            setSigningOut(true);
+            try {
+              await logout();
+              // No manual navigation needed — AppNavigator reacts to user
+              // becoming null and replaces the stack with Auth (Login) screen.
+            } catch {
+              setSigningOut(false);
+            }
+          },
+        },
+      ],
+    );
+  };
+
+  // ── NEW: profile icon handler ────────────────────────────────────────────────
+  // Dashboard is kept as a hidden tab in MainTabs so it is reachable here
+  // even though its tab bar button is invisible.
+  const handleProfilePress = () => {
+    navigation?.navigate?.('Dashboard');
+  };
 
   // ── Auto-slide every 4 s ──────────────────────────────────────────────────
   useEffect(() => {
@@ -211,83 +249,95 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
 
         {/* ══ HERO carousel ═══════════════════════════════════════════════════ */}
         <SafeAreaView style={styles.heroSafeArea}>
-        <View>
-          <FlatList
-            ref={flatListRef}
-            data={HERO_IMAGES}
-            keyExtractor={(_, i) => i.toString()}
-            horizontal pagingEnabled
-            showsHorizontalScrollIndicator={false}
-            onScroll={onCarouselScroll}
-            scrollEventThrottle={16}
-            renderItem={({ item }) => (
-              <View style={styles.heroSlide}>
-                <Image source={item} style={styles.heroImage} resizeMode="cover" />
+          <View>
+            <FlatList
+              ref={flatListRef}
+              data={HERO_IMAGES}
+              keyExtractor={(_, i) => i.toString()}
+              horizontal pagingEnabled
+              showsHorizontalScrollIndicator={false}
+              onScroll={onCarouselScroll}
+              scrollEventThrottle={16}
+              renderItem={({ item }) => (
+                <View style={styles.heroSlide}>
+                  <Image source={item} style={styles.heroImage} resizeMode="cover" />
+                </View>
+              )}
+            />
+
+            {/* Image count badge */}
+            <View style={styles.imageBadge}>
+              <Text style={styles.imageBadgeText}>
+                {activeIndex + 1}/{HERO_IMAGES.length}
+              </Text>
+            </View>
+
+            {/* Dot indicators */}
+            {HERO_IMAGES.length > 1 && (
+              <View style={styles.dotsRow}>
+                {HERO_IMAGES.map((_, i) => (
+                  <View
+                    key={i}
+                    style={[
+                      styles.dot,
+                      i === activeIndex ? styles.dotActive : styles.dotInactive,
+                    ]}
+                  />
+                ))}
               </View>
             )}
-          />
 
-          {/* Image count badge */}
-          <View style={styles.imageBadge}>
-            <Text style={styles.imageBadgeText}>
-              {activeIndex + 1}/{HERO_IMAGES.length}
-            </Text>
-          </View>
+            {/* ── Overlay: SignOut (left) │ Notification + Profile (right) ── */}
+            <View style={styles.heroOverlay}>
+              <View style={styles.heroOverlayRow}>
 
-          {/* Dot indicators */}
-          {HERO_IMAGES.length > 1 && (
-            <View style={styles.dotsRow}>
-              {HERO_IMAGES.map((_, i) => (
-                <View
-                  key={i}
-                  style={[
-                    styles.dot,
-                    i === activeIndex ? styles.dotActive : styles.dotInactive,
-                  ]}
-                />
-              ))}
-            </View>
-          )}
-
-          {/* ── Overlay: SignOut (left) │ Notification + Profile (right) ── */}
-          <View style={styles.heroOverlay}>
-            <View style={styles.heroOverlayRow}>
-
-              {/* LEFT — sign out, navigates back to sign-in */}
-              <TouchableOpacity
-                style={styles.iconBtn}
-                onPress={() => navigation?.goBack?.()}
-                activeOpacity={0.7}
-              >
-                <SignOutIcon color={C.text} />
-              </TouchableOpacity>
-
-              {/* RIGHT — notification + profile, side by side */}
-              <View style={styles.rightIconsRow}>
+                {/* LEFT — sign out: calls logout(), AppNavigator auto-redirects to Login */}
                 <TouchableOpacity
                   style={styles.iconBtn}
-                  onPress={() => navigate('Notifications')}
+                  onPress={handleSignOut}
                   activeOpacity={0.7}
+                  disabled={signingOut}
                 >
-                  <NotificationIcon color={C.text} />
+                  {signingOut
+                    ? <ActivityIndicator size="small" color={C.primary} />
+                    : <SignOutIcon color={C.text} />
+                  }
                 </TouchableOpacity>
 
-                <TouchableOpacity
-                  style={styles.iconBtn}
-                  onPress={() => navigate('Profile')}
-                  activeOpacity={0.7}
-                >
-                  <ProfileIcon color={C.text} />
-                </TouchableOpacity>
+                {/* RIGHT — notification + profile */}
+                <View style={styles.rightIconsRow}>
+                  <TouchableOpacity
+                    style={styles.iconBtn}
+                    onPress={() => navigate('Notifications')}
+                    activeOpacity={0.7}
+                  >
+                    <NotificationIcon color={C.text} />
+                  </TouchableOpacity>
+
+                  {/* Profile icon → Dashboard (hidden tab, always navigable) */}
+                  <TouchableOpacity
+                    style={styles.iconBtn}
+                    onPress={handleProfilePress}
+                    activeOpacity={0.7}
+                  >
+                    <ProfileIcon color={C.primary} />
+                  </TouchableOpacity>
+                </View>
+
               </View>
-
             </View>
           </View>
-        </View>
         </SafeAreaView>
 
         {/* ══ CONTENT ═════════════════════════════════════════════════════════ */}
         <View style={styles.content}>
+
+          {/* Greeting with user's name when logged in */}
+          {user?.profile?.fullname ? (
+            <Text style={styles.greeting}>
+              Welcome, {user.profile.fullname.split(' ')[0]} 👋
+            </Text>
+          ) : null}
 
           {/* Badges */}
           <View style={styles.badgeRow}>
@@ -438,23 +488,14 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: C.white },
 
-  // Wraps the entire hero block so the status-bar inset is respected,
-  // pushing the image section down exactly like BlogScreen's SafeAreaView top bar.
-  heroSafeArea: {
-    backgroundColor: C.bg,
-  },
+  heroSafeArea: { backgroundColor: C.bg },
 
-  // paddingTop: 56 clears the floating icon row (≈ safe-area + icon height).
-  // overflow: hidden keeps the image flush inside the slide bounds.
   heroSlide: {
     width,
     overflow: 'hidden',
     backgroundColor: C.bg,
     paddingTop: 56,
   },
-
-  // Raw height raised by the same 56 px so the visible portrait area stays
-  // at 340 px and nothing gets cropped.
   heroImage: { width, height: 396 },
 
   imageBadge: {
@@ -472,28 +513,22 @@ const styles = StyleSheet.create({
   dotActive:   { width: 16, backgroundColor: C.white },
   dotInactive: { width: 6,  backgroundColor: 'rgba(255,255,255,0.45)' },
 
-  heroOverlay: { position: 'absolute', top: 0, left: 0, right: 0 },
+  heroOverlay:    { position: 'absolute', top: 0, left: 0, right: 0 },
   heroOverlayRow: {
     flexDirection: 'row', justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 16, paddingTop: 6,
   },
-
-  rightIconsRow: {
-    flexDirection: 'row',
-    gap: 8,
-  },
-
-  // FIX 2 — stripped backgroundColor, elevation, and all shadow props.
-  //          Only size + alignment remain so icons render bare over the image.
-  iconBtn: {
-    width: 40,
-    height: 40,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
+  rightIconsRow: { flexDirection: 'row', gap: 8 },
+  iconBtn: { width: 40, height: 40, justifyContent: 'center', alignItems: 'center' },
 
   content: { paddingHorizontal: 20, paddingTop: 20, paddingBottom: 8 },
+
+  // NEW: greeting shown when user is logged in
+  greeting: {
+    fontSize: 14, fontWeight: '600', color: C.primary,
+    marginBottom: 10,
+  },
 
   badgeRow: { flexDirection: 'row', gap: 8, marginBottom: 12 },
   badge: { backgroundColor: '#eff6ff', paddingHorizontal: 12, paddingVertical: 4, borderRadius: 20 },
@@ -528,7 +563,7 @@ const styles = StyleSheet.create({
   link:      { color: C.primary, fontWeight: '600', fontSize: 13 },
 
   aboutCardsScroll: { gap: 10, paddingRight: 4 },
-  aboutCard: { width: width * 0.60, borderRadius: 14, padding: 14, gap: 7, marginRight: 2 },
+  aboutCard:      { width: width * 0.60, borderRadius: 14, padding: 14, gap: 7, marginRight: 2 },
   aboutCardTitle: { color: C.white, fontWeight: '700', fontSize: 13 },
   aboutCardDesc:  { color: 'rgba(255,255,255,0.85)', fontSize: 11, lineHeight: 17 },
 
