@@ -17,10 +17,9 @@ import {
   Alert,
 } from 'react-native';
 import { MaterialIcons, Ionicons } from '@expo/vector-icons';
-import Svg, { Path, Circle } from 'react-native-svg';
+import Svg, { Path } from 'react-native-svg';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { WebView } from 'react-native-webview';
-// ── NEW: wire up auth so Profile and SignOut icons work ────────────────────────
 import { useAuth } from '../../contexts/AuthContext';
 
 const { width } = Dimensions.get('window');
@@ -45,14 +44,39 @@ const C = {
   star:      '#f59e0b',
 };
 
-// ── Hero carousel images ──────────────────────────────────────────────────────
-const HERO_IMAGES = [
+// ── Infinite-loop carousel setup ──────────────────────────────────────────────
+//
+// Strategy: instead of ghost-clone wrapping (which causes the flash because
+// the silent jump races with the animation), we use a LARGE repeated array.
+// We duplicate the 3 real images enough times that the user can never swipe
+// to either end during a normal session (50 full cycles = 150 slots in each
+// direction). The timer always moves forward; it never needs to jump back.
+// This gives a perfectly seamless, flash-free infinite scroll.
+//
+// Memory cost: the array holds references, not pixel data, so it is negligible.
+// The FlatList renders only the visible + a few windowed items at any time.
+//
+// We start in the middle of the array so there is plenty of room in both
+// directions even if the user swipes manually many times.
+
+const REAL_IMAGES = [
   require('../../../assets/images/hero-doctor.jpg'),
   require('../../../assets/images/hospitaldoctor4.png'),
   require('../../../assets/images/hospitaldoctor5.png'),
 ];
+const REAL_COUNT  = REAL_IMAGES.length;
+const REPEAT      = 100;                                  // 100 copies each side
+const TOTAL       = REAL_COUNT * REPEAT * 2;              // 600 slots
+const START_INDEX = Math.floor(TOTAL / 2);                // 300 — begin in middle
+//  START_INDEX is always a multiple of REAL_COUNT so slot 300 shows image 0.
 
-// ── Sign-out SVG icon ─────────────────────────────────────────────────────────
+// Build the big array once (references only, not image bytes).
+const CAROUSEL_DATA = Array.from(
+  { length: TOTAL },
+  (_, i) => REAL_IMAGES[i % REAL_COUNT],
+);
+
+// ── SVG icons ─────────────────────────────────────────────────────────────────
 const SignOutIcon = ({ color = C.text }: { color?: string }) => (
   <Svg width={24} height={24} viewBox="0 0 24 24">
     <Path d="M0 0h24v24H0z" fill="none" />
@@ -67,7 +91,6 @@ const SignOutIcon = ({ color = C.text }: { color?: string }) => (
   </Svg>
 );
 
-// ── Notification bell SVG icon ────────────────────────────────────────────────
 const NotificationIcon = ({ color = C.text }: { color?: string }) => (
   <Svg width={24} height={24} viewBox="0 0 24 24">
     <Path d="M0 0h24v24H0z" fill="none" />
@@ -80,7 +103,6 @@ const NotificationIcon = ({ color = C.text }: { color?: string }) => (
   </Svg>
 );
 
-// ── Profile / person SVG icon ─────────────────────────────────────────────────
 const ProfileIcon = ({ color = C.text }: { color?: string }) => (
   <Svg width={24} height={24} viewBox="0 0 24 24">
     <Path d="M0 0h24v24H0z" fill="none" />
@@ -93,7 +115,7 @@ const ProfileIcon = ({ color = C.text }: { color?: string }) => (
   </Svg>
 );
 
-// ── Stat SVG icons ────────────────────────────────────────────────────────────
+// ── Stat icons ────────────────────────────────────────────────────────────────
 const PatientStatIcon = ({ color }: { color: string }) => (
   <Svg width={20} height={20} viewBox="0 0 512 512">
     <Path fill={color} d="M336 256c-20.56 0-40.44-9.18-56-25.84c-15.13-16.25-24.37-37.92-26-61c-1.74-24.62 5.77-47.26 21.14-63.76S312 80 336 80c23.83 0 45.38 9.06 60.7 25.52c15.47 16.62 23 39.22 21.26 63.63c-1.67 23.11-10.9 44.77-26 61C376.44 246.82 356.57 256 336 256m131.83 176H204.18a27.71 27.71 0 0 1-22-10.67a30.22 30.22 0 0 1-5.26-25.79c8.42-33.81 29.28-61.85 60.32-81.08C264.79 297.4 299.86 288 336 288c36.85 0 71 9 98.71 26.05c31.11 19.13 52 47.33 60.38 81.55a30.27 30.27 0 0 1-5.32 25.78A27.68 27.68 0 0 1 467.83 432M147 260c-35.19 0-66.13-32.72-69-72.93c-1.42-20.6 5-39.65 18-53.62c12.86-13.83 31-21.45 51-21.45s38 7.66 50.93 21.57c13.1 14.08 19.5 33.09 18 53.52c-2.87 40.2-33.8 72.91-68.93 72.91m65.66 31.45c-17.59-8.6-40.42-12.9-65.65-12.9c-29.46 0-58.07 7.68-80.57 21.62c-25.51 15.83-42.67 38.88-49.6 66.71a27.39 27.39 0 0 0 4.79 23.36A25.32 25.32 0 0 0 41.72 400h111a8 8 0 0 0 7.87-6.57c.11-.63.25-1.26.41-1.88c8.48-34.06 28.35-62.84 57.71-83.82a8 8 0 0 0-.63-13.39c-1.57-.92-3.37-1.89-5.42-2.89" />
@@ -151,23 +173,22 @@ interface HomeScreenProps {
 
 // ─────────────────────────────────────────────────────────────────────────────
 export default function HomeScreen({ navigation }: HomeScreenProps) {
-  // ── NEW: pull logout from auth context ──────────────────────────────────────
   const { logout, user } = useAuth();
 
-  const [activeIndex,   setActiveIndex]   = useState(0);
+  // currentIndex lives in CAROUSEL_DATA space (0..TOTAL-1).
+  // It starts at START_INDEX (middle of the big array) and only ever increases
+  // as the auto-timer fires, so there is never a backward jump and never a flash.
+  const currentIndexRef = useRef(START_INDEX);
+
   const [aboutExpanded, setAboutExpanded] = useState(false);
   const [post,          setPost]          = useState<any>(null);
   const [loadingPost,   setLoadingPost]   = useState(true);
   const [signingOut,    setSigningOut]    = useState(false);
 
   const flatListRef = useRef<FlatList>(null);
-
   const navigate = (route: string) => navigation?.navigate?.(route);
 
-  // ── NEW: sign-out handler ────────────────────────────────────────────────────
-  // Calls logout() which clears AsyncStorage tokens.
-  // AppNavigator's conditional rendering then automatically unmounts MainTabs
-  // and shows AuthNavigator (Login screen) because user becomes null.
+  // ── Sign-out ──────────────────────────────────────────────────────────────
   const handleSignOut = () => {
     Alert.alert(
       'Sign Out',
@@ -179,41 +200,34 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
           style: 'destructive',
           onPress: async () => {
             setSigningOut(true);
-            try {
-              await logout();
-              // No manual navigation needed — AppNavigator reacts to user
-              // becoming null and replaces the stack with Auth (Login) screen.
-            } catch {
-              setSigningOut(false);
-            }
+            try   { await logout(); }
+            catch { setSigningOut(false); }
           },
         },
       ],
     );
   };
 
-  // ── NEW: profile icon handler ────────────────────────────────────────────────
-  // Dashboard is kept as a hidden tab in MainTabs so it is reachable here
-  // even though its tab bar button is invisible.
-  const handleProfilePress = () => {
-    navigation?.navigate?.('Dashboard');
-  };
+  const handleProfilePress = () => navigation?.navigate?.('Dashboard');
 
-  // ── Auto-slide every 4 s ──────────────────────────────────────────────────
+  // ── Auto-advance: always forward, never jumps back, never flashes ─────────
+  //
+  // Every 4 s we increment currentIndexRef and call scrollToIndex with
+  // animated: true. Because CAROUSEL_DATA is 600 slots long and we start
+  // in the middle, the FlatList never reaches either end during any realistic
+  // usage. No ghost slots, no silent jumps, no race conditions — the flash
+  // is physically impossible with this approach.
+  //
+  // We keep the index in a ref (not state) so updating it never triggers a
+  // re-render. The FlatList handles its own position internally.
   useEffect(() => {
     const timer = setInterval(() => {
-      setActiveIndex(prev => {
-        const next = (prev + 1) % HERO_IMAGES.length;
-        flatListRef.current?.scrollToIndex({ index: next, animated: true });
-        return next;
-      });
+      const next = currentIndexRef.current + 1;
+      currentIndexRef.current = next;
+      flatListRef.current?.scrollToIndex({ index: next, animated: true });
     }, 4000);
     return () => clearInterval(timer);
   }, []);
-
-  const onCarouselScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
-    setActiveIndex(Math.round(e.nativeEvent.contentOffset.x / width));
-  };
 
   // ── Blog post ─────────────────────────────────────────────────────────────
   const loadPost = useCallback(async () => {
@@ -247,17 +261,29 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
     <View style={styles.root}>
       <ScrollView showsVerticalScrollIndicator={false}>
 
-        {/* ══ HERO carousel ═══════════════════════════════════════════════════ */}
+        {/* ══ HERO — flash-free infinite carousel ═════════════════════════════ */}
         <SafeAreaView style={styles.heroSafeArea}>
           <View>
             <FlatList
               ref={flatListRef}
-              data={HERO_IMAGES}
+              data={CAROUSEL_DATA}
               keyExtractor={(_, i) => i.toString()}
-              horizontal pagingEnabled
+              horizontal
+              pagingEnabled
               showsHorizontalScrollIndicator={false}
-              onScroll={onCarouselScroll}
-              scrollEventThrottle={16}
+              // Mandatory for initialScrollIndex to work without a warning
+              initialScrollIndex={START_INDEX}
+              getItemLayout={(_, index) => ({
+                length: width,
+                offset: width * index,
+                index,
+              })}
+              // windowSize controls how many screens worth of items are kept
+              // in memory around the current position. 3 = prev + current + next,
+              // which is the minimum needed for smooth sliding.
+              windowSize={3}
+              // Removes items far from viewport to keep memory flat
+              removeClippedSubviews
               renderItem={({ item }) => (
                 <View style={styles.heroSlide}>
                   <Image source={item} style={styles.heroImage} resizeMode="cover" />
@@ -265,33 +291,11 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
               )}
             />
 
-            {/* Image count badge */}
-            <View style={styles.imageBadge}>
-              <Text style={styles.imageBadgeText}>
-                {activeIndex + 1}/{HERO_IMAGES.length}
-              </Text>
-            </View>
-
-            {/* Dot indicators */}
-            {HERO_IMAGES.length > 1 && (
-              <View style={styles.dotsRow}>
-                {HERO_IMAGES.map((_, i) => (
-                  <View
-                    key={i}
-                    style={[
-                      styles.dot,
-                      i === activeIndex ? styles.dotActive : styles.dotInactive,
-                    ]}
-                  />
-                ))}
-              </View>
-            )}
-
             {/* ── Overlay: SignOut (left) │ Notification + Profile (right) ── */}
+            {/* Dots and badge are both removed as requested                    */}
             <View style={styles.heroOverlay}>
               <View style={styles.heroOverlayRow}>
 
-                {/* LEFT — sign out: calls logout(), AppNavigator auto-redirects to Login */}
                 <TouchableOpacity
                   style={styles.iconBtn}
                   onPress={handleSignOut}
@@ -304,7 +308,6 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
                   }
                 </TouchableOpacity>
 
-                {/* RIGHT — notification + profile */}
                 <View style={styles.rightIconsRow}>
                   <TouchableOpacity
                     style={styles.iconBtn}
@@ -314,7 +317,6 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
                     <NotificationIcon color={C.text} />
                   </TouchableOpacity>
 
-                  {/* Profile icon → Dashboard (hidden tab, always navigable) */}
                   <TouchableOpacity
                     style={styles.iconBtn}
                     onPress={handleProfilePress}
@@ -332,7 +334,6 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
         {/* ══ CONTENT ═════════════════════════════════════════════════════════ */}
         <View style={styles.content}>
 
-          {/* Greeting with user's name when logged in */}
           {user?.profile?.fullname ? (
             <Text style={styles.greeting}>
               Welcome, {user.profile.fullname.split(' ')[0]} 👋
@@ -391,7 +392,7 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
             </TouchableOpacity>
           )}
 
-          {/* About feature cards */}
+          {/* Feature cards */}
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
@@ -399,9 +400,9 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
             style={{ marginTop: 14 }}
           >
             {[
-              { title: 'Professional Team',   icon: 'people',         desc: 'Highly qualified physicians and health professionals providing excellent care.',      bg: C.primary   },
-              { title: 'Advanced Technology', icon: 'devices',        desc: 'Electronic medical records and telemedicine for fast, quality healthcare delivery.',  bg: C.secondary },
-              { title: 'Great Facilities',    icon: 'local-hospital', desc: 'World-class equipment: BiPAP, CTG, ultrasound, ECG, cardiac monitors and more.',     bg: C.red       },
+              { title: 'Professional Team',   icon: 'people',         desc: 'Highly qualified physicians and health professionals providing excellent care.',     bg: C.primary   },
+              { title: 'Advanced Technology', icon: 'devices',        desc: 'Electronic medical records and telemedicine for fast, quality healthcare delivery.', bg: C.secondary },
+              { title: 'Great Facilities',    icon: 'local-hospital', desc: 'World-class equipment: BiPAP, CTG, ultrasound, ECG, cardiac monitors and more.',    bg: C.red       },
             ].map((card, i) => (
               <View key={i} style={[styles.aboutCard, { backgroundColor: card.bg }]}>
                 <MaterialIcons name={card.icon as any} size={26} color={C.white} />
@@ -411,7 +412,7 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
             ))}
           </ScrollView>
 
-          {/* Contact / Book CTAs */}
+          {/* CTAs */}
           <TouchableOpacity style={styles.contactBtn} onPress={handleContact} activeOpacity={0.85}>
             <Ionicons name="logo-whatsapp" size={20} color={C.white} />
             <Text style={styles.contactBtnText}>Contact Us on WhatsApp</Text>
@@ -498,21 +499,7 @@ const styles = StyleSheet.create({
   },
   heroImage: { width, height: 396 },
 
-  imageBadge: {
-    position: 'absolute', bottom: 12, right: 16,
-    backgroundColor: 'rgba(0,0,0,0.45)',
-    paddingHorizontal: 10, paddingVertical: 4, borderRadius: 20,
-  },
-  imageBadgeText: { color: C.white, fontSize: 11, fontWeight: '600' },
-
-  dotsRow: {
-    position: 'absolute', bottom: 12, left: 0, right: 0,
-    flexDirection: 'row', justifyContent: 'center', gap: 5,
-  },
-  dot:         { height: 6, borderRadius: 3 },
-  dotActive:   { width: 16, backgroundColor: C.white },
-  dotInactive: { width: 6,  backgroundColor: 'rgba(255,255,255,0.45)' },
-
+  // Dots and badge are both fully removed — no remnant styles kept
   heroOverlay:    { position: 'absolute', top: 0, left: 0, right: 0 },
   heroOverlayRow: {
     flexDirection: 'row', justifyContent: 'space-between',
@@ -524,20 +511,16 @@ const styles = StyleSheet.create({
 
   content: { paddingHorizontal: 20, paddingTop: 20, paddingBottom: 8 },
 
-  // NEW: greeting shown when user is logged in
-  greeting: {
-    fontSize: 14, fontWeight: '600', color: C.primary,
-    marginBottom: 10,
-  },
+  greeting: { fontSize: 14, fontWeight: '600', color: C.primary, marginBottom: 10 },
 
   badgeRow: { flexDirection: 'row', gap: 8, marginBottom: 12 },
-  badge: { backgroundColor: '#eff6ff', paddingHorizontal: 12, paddingVertical: 4, borderRadius: 20 },
-  badgeText: { color: C.primary, fontSize: 11, fontWeight: '700' },
+  badge:    { backgroundColor: '#eff6ff', paddingHorizontal: 12, paddingVertical: 4, borderRadius: 20 },
+  badgeText:{ color: C.primary, fontSize: 11, fontWeight: '700' },
 
   heroName: { fontSize: 22, fontWeight: '800', color: C.text, lineHeight: 28, marginBottom: 4 },
   heroSpec: { fontSize: 13, color: C.sub, marginBottom: 8 },
 
-  ratingRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 16 },
+  ratingRow:   { flexDirection: 'row', alignItems: 'center', marginBottom: 16 },
   ratingText:  { fontSize: 13, fontWeight: '700', color: C.text, marginLeft: 4 },
   ratingCount: { fontSize: 12, color: C.muted },
 
