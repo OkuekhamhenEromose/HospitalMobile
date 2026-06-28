@@ -1,3 +1,5 @@
+// src/screens/Blog/BlogScreen.tsx
+
 import React, { useState, useRef, useEffect } from 'react';
 import {
   View,
@@ -13,9 +15,10 @@ import {
   ActivityIndicator,
   Alert,
 } from 'react-native';
-import { Ionicons, MaterialIcons } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import Svg, { Path } from 'react-native-svg';
+// ── CHANGE: added G to support the Mental Wellness icon ────────────────────────
+import Svg, { Path, G } from 'react-native-svg';
 import { useAuth } from '../../contexts/AuthContext';
 
 const { width } = Dimensions.get('window');
@@ -149,21 +152,103 @@ const MOCK_POSTS = [
   },
 ];
 
-// ── Categories ────────────────────────────────────────────────────────────────
-const CATEGORIES = [
+// ── CHANGE: Mental Wellness SVG icon ──────────────────────────────────────────
+// Ported from the mask-based SVG: the mask white areas become strokes/fills
+// at the icon colour; the brain fill uses 33 % opacity to match the original
+// mask's #555 gray value (85/255 ≈ 0.33).
+const MentalWellnessIcon = ({ color, size }: { color: string; size: number }) => (
+  <Svg width={size} height={size} viewBox="0 0 48 48">
+    <G fill="none" stroke={color}>
+      {/* Speech-bubble outline */}
+      <Path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={4.667}
+        d="M19.036 44q-1.47-4.793-4.435-7.147c-2.965-2.353-7.676-.89-9.416-3.318s1.219-6.892 2.257-9.526s-3.98-3.565-3.394-4.313q.585-.748 7.609-4.316Q13.652 4 26.398 4C39.144 4 44 14.806 44 21.68c0 6.872-5.88 14.276-14.256 15.873q-1.123 1.636 3.24 6.447"
+      />
+      {/* Brain shape — semi-transparent fill mirrors the mask's #555 value */}
+      <Path
+        fill={color}
+        fillOpacity={0.33}
+        fillRule="evenodd"
+        strokeLinejoin="round"
+        strokeWidth={4}
+        d="M19.5 14.5q-.981 3.801.583 5.339q1.563 1.537 5.328 2.01q-.855 4.903 2.083 4.6q2.937-.302 3.53-2.44q4.59 1.29 4.976-2.16c.385-3.45-1.475-6.201-2.238-6.201s-2.738-.093-2.738-1.148s-2.308-1.65-4.391-1.65s-.83-1.405-3.69-.85q-2.86.555-3.443 2.5Z"
+      />
+      {/* Stem line */}
+      <Path
+        strokeLinecap="round"
+        strokeWidth={4}
+        d="M30.5 25.5c-1.017.631-2.412 1.68-3 2.5c-1.469 2.05-2.66 3.298-2.92 4.608"
+      />
+    </G>
+  </Svg>
+);
+
+// ── CHANGE: branded social-share SVG icons ────────────────────────────────────
+
+const FacebookIcon = ({ size = 14 }: { size?: number }) => (
+  <Svg width={size} height={size} viewBox="0 0 256 256">
+    <Path
+      fill="#1877f2"
+      d="M256 128C256 57.308 198.692 0 128 0S0 57.308 0 128c0 63.888 46.808 116.843 108 126.445V165H75.5v-37H108V99.8c0-32.08 19.11-49.8 48.348-49.8C170.352 50 185 52.5 185 52.5V84h-16.14C152.959 84 148 93.867 148 103.99V128h35.5l-5.675 37H148v89.445c61.192-9.602 108-62.556 108-126.445"
+    />
+    <Path
+      fill="#fff"
+      d="m177.825 165l5.675-37H148v-24.01C148 93.866 152.959 84 168.86 84H185V52.5S170.352 50 156.347 50C127.11 50 108 67.72 108 99.8V128H75.5v37H108v89.445A129 129 0 0 0 128 256a129 129 0 0 0 20-1.555V165z"
+    />
+  </Svg>
+);
+
+const XIcon = ({ size = 14 }: { size?: number }) => (
+  <Svg width={size} height={size} viewBox="0 0 128 128">
+    <Path
+      fill={C.dark}
+      d="M75.916 54.2L122.542 0h-11.05L71.008 47.06L38.672 0H1.376l48.898 71.164L1.376 128h11.05L55.18 78.303L89.328 128h37.296L75.913 54.2ZM60.782 71.79l-4.955-7.086l-39.42-56.386h16.972L65.19 53.824l4.954 7.086l41.353 59.15h-16.97L60.782 71.793Z"
+    />
+  </Svg>
+);
+
+const LinkedInIcon = ({ size = 14 }: { size?: number }) => (
+  <Svg width={size} height={size} viewBox="0 0 128 128">
+    <Path
+      fill="#0076b2"
+      d="M116 3H12a8.91 8.91 0 0 0-9 8.8v104.42a8.91 8.91 0 0 0 9 8.78h104a8.93 8.93 0 0 0 9-8.81V11.77A8.93 8.93 0 0 0 116 3"
+    />
+    <Path
+      fill="#fff"
+      d="M21.06 48.73h18.11V107H21.06zm9.06-29a10.5 10.5 0 1 1-10.5 10.49a10.5 10.5 0 0 1 10.5-10.49m20.41 29h17.36v8h.24c2.42-4.58 8.32-9.41 17.13-9.41C103.6 47.28 107 59.35 107 75v32H88.89V78.65c0-6.75-.12-15.44-9.41-15.44s-10.87 7.36-10.87 15V107H50.53z"
+    />
+  </Svg>
+);
+
+// ── CHANGE: categories now use an optional SvgIcon field ──────────────────────
+interface CategoryItem {
+  label: string;
+  icon?: string;
+  SvgIcon?: React.FC<{ color: string; size: number }>;
+}
+
+const CATEGORIES: CategoryItem[] = [
   { label: 'All',             icon: 'grid-outline'             },
   { label: 'General Health',  icon: 'medical-outline'          },
-  { label: 'Mental Wellness', icon: 'heart-outline'            },
+  // ── CHANGE: Mental Wellness uses the new SVG icon instead of heart-outline ──
+  { label: 'Mental Wellness', SvgIcon: MentalWellnessIcon      },
   { label: 'Preventive Care', icon: 'shield-checkmark-outline' },
   { label: 'Med Updates',     icon: 'newspaper-outline'        },
   { label: 'Healthy Living',  icon: 'leaf-outline'             },
 ];
 
-// ── Share ─────────────────────────────────────────────────────────────────────
-const SHARE_PLATFORMS = [
-  { key: 'facebook', label: 'f'  },
-  { key: 'twitter',  label: '𝕏' },
-  { key: 'linkedin', label: 'in' },
+// ── CHANGE: share platforms now carry icon components instead of text labels ──
+interface SharePlatform {
+  key: string;
+  Icon: React.FC<{ size?: number }>;
+}
+
+const SHARE_PLATFORMS: SharePlatform[] = [
+  { key: 'facebook', Icon: FacebookIcon },
+  { key: 'twitter',  Icon: XIcon        },
+  { key: 'linkedin', Icon: LinkedInIcon },
 ];
 
 function sharePost(platform: string, post: typeof MOCK_POSTS[0]) {
@@ -176,23 +261,13 @@ function sharePost(platform: string, post: typeof MOCK_POSTS[0]) {
   if (urls[platform]) Linking.openURL(urls[platform]);
 }
 
-// ── Flash-free infinite carousel — identical strategy to HomeScreen ───────────
-//
-// MOCK_POSTS (7 items) repeated 200× = 1 400 slots.
-// START_INDEX = 700 (exact midpoint, always a multiple of 7).
-// Auto-timer only ever increments → no backward jump → no flash.
+// ── Carousel constants ────────────────────────────────────────────────────────
+const REAL_COUNT  = MOCK_POSTS.length;
+const TOTAL       = REAL_COUNT * 100 * 2;
+const START_INDEX = Math.floor(TOTAL / 2);
+const CAROUSEL_DATA = Array.from({ length: TOTAL }, (_, i) => MOCK_POSTS[i % REAL_COUNT]);
 
-const REAL_COUNT  = MOCK_POSTS.length;          // 7
-const REPEAT      = 100;
-const TOTAL       = REAL_COUNT * REPEAT * 2;    // 1 400
-const START_INDEX = Math.floor(TOTAL / 2);      // 700
-
-const CAROUSEL_DATA = Array.from(
-  { length: TOTAL },
-  (_, i) => MOCK_POSTS[i % REAL_COUNT],
-);
-
-// ── SVG icons — identical to HomeScreen ──────────────────────────────────────
+// ── Overlay SVG icons (unchanged) ────────────────────────────────────────────
 const SignOutIcon = ({ color = C.text }: { color?: string }) => (
   <Svg width={24} height={24} viewBox="0 0 24 24">
     <Path d="M0 0h24v24H0z" fill="none" />
@@ -232,7 +307,7 @@ export default function BlogScreen({ navigation }: BlogScreenProps) {
   const [activeTab,  setActiveTab]  = useState(0);
   const [expanded,   setExpanded]   = useState<Record<string, boolean>>({});
 
-  // ── Auto-advance: only forward, never flashes ─────────────────────────────
+  // ── Auto-advance ──────────────────────────────────────────────────────────
   useEffect(() => {
     const timer = setInterval(() => {
       const next = currentIndexRef.current + 1;
@@ -268,14 +343,14 @@ export default function BlogScreen({ navigation }: BlogScreenProps) {
     setExpanded(prev => ({ ...prev, [key]: !prev[key] }));
 
   const filteredPosts = MOCK_POSTS.filter(p => {
-    const q          = search.toLowerCase();
-    const cat        = CATEGORIES[activeTab].label;
+    const q           = search.toLowerCase();
+    const cat         = CATEGORIES[activeTab].label;
     const matchSearch = !q || p.title.toLowerCase().includes(q) || p.description.toLowerCase().includes(q);
     const matchCat    = cat === 'All' || p.category === cat;
     return matchSearch && matchCat;
   });
 
-  // ── Carousel slide — identical JSX to HomeScreen's renderHeroSlide ────────
+  // ── Carousel slide ────────────────────────────────────────────────────────
   const renderCarouselSlide = ({ item }: { item: typeof MOCK_POSTS[0] }) => (
     <TouchableOpacity
       style={h.slide}
@@ -350,6 +425,8 @@ export default function BlogScreen({ navigation }: BlogScreenProps) {
             <Ionicons name="calendar-outline" size={10} color={C.muted} />
             <Text style={bc.metaTxt}>{item.date}</Text>
           </View>
+
+          {/* ── CHANGE: branded SVG share icons, no borders ───────────────── */}
           <View style={bc.footer}>
             <Text style={bc.shareLabel}>Share:</Text>
             <View style={bc.shareRow}>
@@ -358,9 +435,9 @@ export default function BlogScreen({ navigation }: BlogScreenProps) {
                   key={p.key}
                   style={bc.shareBtn}
                   onPress={() => sharePost(p.key, item)}
-                  activeOpacity={0.8}
+                  activeOpacity={0.75}
                 >
-                  <Text style={bc.shareTxt}>{p.label}</Text>
+                  <p.Icon size={16} />
                 </TouchableOpacity>
               ))}
             </View>
@@ -380,7 +457,6 @@ export default function BlogScreen({ navigation }: BlogScreenProps) {
   // ── Render ────────────────────────────────────────────────────────────────
   return (
     <View style={s.root}>
-
       <FlatList
         data={filteredPosts}
         keyExtractor={item => item.id}
@@ -388,12 +464,7 @@ export default function BlogScreen({ navigation }: BlogScreenProps) {
         contentContainerStyle={{ paddingBottom: 48 }}
         ListHeaderComponent={(
           <>
-            {/* ══ HERO — flash-free infinite carousel ═══════════════════════
-                • SafeAreaView bg = C.bg  (same as HomeScreen)
-                • slide paddingTop = 56, image height = 396 (same as HomeScreen)
-                • Overlay: SignOut left | Notification + Profile right
-                  — absolutely positioned, same row/padding as HomeScreen
-            ══════════════════════════════════════════════════════════════ */}
+            {/* ══ HERO ══════════════════════════════════════════════════════ */}
             <SafeAreaView style={s.heroSafeArea}>
               <View>
                 <FlatList
@@ -418,10 +489,9 @@ export default function BlogScreen({ navigation }: BlogScreenProps) {
                   }}
                 />
 
-                {/* ── Same overlay as HomeScreen ── */}
+                {/* Overlay */}
                 <View style={s.heroOverlay}>
                   <View style={s.heroOverlayRow}>
-
                     <TouchableOpacity
                       style={s.iconBtn}
                       onPress={handleSignOut}
@@ -442,7 +512,6 @@ export default function BlogScreen({ navigation }: BlogScreenProps) {
                       >
                         <NotificationIcon color={C.text} />
                       </TouchableOpacity>
-
                       <TouchableOpacity
                         style={s.iconBtn}
                         onPress={handleProfilePress}
@@ -451,7 +520,6 @@ export default function BlogScreen({ navigation }: BlogScreenProps) {
                         <ProfileIcon color={C.primary} />
                       </TouchableOpacity>
                     </View>
-
                   </View>
                 </View>
               </View>
@@ -479,29 +547,34 @@ export default function BlogScreen({ navigation }: BlogScreenProps) {
                 </View>
               </View>
 
+              {/* ── CHANGE: renders MentalWellnessIcon via SvgIcon when present ── */}
               <ScrollView
                 horizontal
                 showsHorizontalScrollIndicator={false}
                 contentContainerStyle={s.tabsRow}
                 style={{ marginTop: 12 }}
               >
-                {CATEGORIES.map((cat, i) => (
-                  <TouchableOpacity
-                    key={i}
-                    style={[s.tab, i === activeTab && s.tabOn]}
-                    onPress={() => setActiveTab(i)}
-                    activeOpacity={0.8}
-                  >
-                    <Ionicons
-                      name={cat.icon as any}
-                      size={13}
-                      color={i === activeTab ? C.white : C.sub}
-                    />
-                    <Text style={[s.tabTxt, i === activeTab && s.tabTxtOn]}>
-                      {cat.label}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
+                {CATEGORIES.map((cat, i) => {
+                  const isActive  = i === activeTab;
+                  const iconColor = isActive ? C.white : C.sub;
+                  return (
+                    <TouchableOpacity
+                      key={i}
+                      style={[s.tab, isActive && s.tabOn]}
+                      onPress={() => setActiveTab(i)}
+                      activeOpacity={0.8}
+                    >
+                      {cat.SvgIcon ? (
+                        <cat.SvgIcon color={iconColor} size={13} />
+                      ) : (
+                        <Ionicons name={cat.icon as any} size={13} color={iconColor} />
+                      )}
+                      <Text style={[s.tabTxt, isActive && s.tabTxtOn]}>
+                        {cat.label}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
               </ScrollView>
             </View>
 
@@ -533,16 +606,15 @@ export default function BlogScreen({ navigation }: BlogScreenProps) {
   );
 }
 
-// ── Hero slide styles — pixel-identical to HomeScreen ─────────────────────────
+// ── Hero slide styles ─────────────────────────────────────────────────────────
 const h = StyleSheet.create({
   slide: {
     width,
     overflow: 'hidden',
     backgroundColor: C.bg,
-    paddingTop: 56,       // matches HomeScreen heroSlide.paddingTop
+    paddingTop: 56,
   },
-  img: { width, height: 396 },  // matches HomeScreen heroImage
-
+  img: { width, height: 396 },
   grad: {
     position: 'absolute', bottom: 0, left: 0, right: 0,
     backgroundColor: 'rgba(17,24,39,0.76)', padding: 16,
@@ -581,8 +653,8 @@ const bc = StyleSheet.create({
     shadowRadius: 8,
     elevation: 3,
   },
-  imgWrap: { width: CARD_IMG_W, height: CARD_IMG_H, position: 'relative' },
-  img:     { width: '100%', height: '100%' },
+  imgWrap:  { width: CARD_IMG_W, height: CARD_IMG_H, position: 'relative' },
+  img:      { width: '100%', height: '100%' },
   bookmarkBtn: {
     position: 'absolute', top: 8, right: 8,
     width: 24, height: 24, borderRadius: 12,
@@ -608,13 +680,12 @@ const bc = StyleSheet.create({
   metaTxt:      { fontSize: 10, color: C.muted },
   footer:       { flexDirection: 'row', alignItems: 'center', gap: 5 },
   shareLabel:   { fontSize: 9, color: C.muted, fontWeight: '600' },
-  shareRow:     { flexDirection: 'row', gap: 4, flex: 1 },
+  shareRow:     { flexDirection: 'row', gap: 5, flex: 1, alignItems: 'center' },
+  // ── CHANGE: border removed — just a centred hit-target ────────────────────
   shareBtn: {
-    width: 22, height: 22, borderRadius: 11,
-    borderWidth: 1.2, borderColor: C.primary,
+    width: 22, height: 22,
     justifyContent: 'center', alignItems: 'center',
   },
-  shareTxt: { color: C.primary, fontSize: 8, fontWeight: '800' },
   arrowBtn: {
     width: 26, height: 26, borderRadius: 13,
     backgroundColor: C.primary,
@@ -622,14 +693,12 @@ const bc = StyleSheet.create({
   },
 });
 
-// ── Root styles ───────────────────────────────────────────────────────────────
+// ── Root / overlay styles ─────────────────────────────────────────────────────
 const s = StyleSheet.create({
   root: { flex: 1, backgroundColor: C.bg },
 
-  // ── Hero — same bg/sizing as HomeScreen ──────────────────────────────────
   heroSafeArea: { backgroundColor: C.bg },
 
-  // ── Overlay row — copied exactly from HomeScreen styles ───────────────────
   heroOverlay:    { position: 'absolute', top: 0, left: 0, right: 0 },
   heroOverlayRow: {
     flexDirection: 'row', justifyContent: 'space-between',
@@ -639,8 +708,8 @@ const s = StyleSheet.create({
   rightIconsRow: { flexDirection: 'row', gap: 8 },
   iconBtn:       { width: 40, height: 40, justifyContent: 'center', alignItems: 'center' },
 
-  // ── Search ────────────────────────────────────────────────────────────────
-  searchOuter: { paddingHorizontal: 16, paddingTop: 16, paddingBottom: 4 },
+  // ── CHANGE: paddingTop reduced from 16 → 4 to close the gap to the hero ───
+  searchOuter: { paddingHorizontal: 16, paddingTop: 4, paddingBottom: 4 },
   searchBar: {
     flexDirection: 'row', alignItems: 'center', gap: 10,
     backgroundColor: C.white, borderRadius: 16,
@@ -655,7 +724,6 @@ const s = StyleSheet.create({
     justifyContent: 'center', alignItems: 'center',
   },
 
-  // ── Category tabs ─────────────────────────────────────────────────────────
   tabsRow: { paddingRight: 4, gap: 8 },
   tab: {
     flexDirection: 'row', alignItems: 'center', gap: 5,
@@ -667,15 +735,13 @@ const s = StyleSheet.create({
   tabTxt:   { fontSize: 11, fontWeight: '600', color: C.sub },
   tabTxtOn: { color: C.white },
 
-  // ── Articles header ───────────────────────────────────────────────────────
   recHeader: {
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
     paddingHorizontal: 16, paddingTop: 18, paddingBottom: 12,
   },
-  recTitle:  { fontSize: 17, fontWeight: '800', color: C.text },
-  recCount:  { fontSize: 12, color: C.muted, fontWeight: '500' },
+  recTitle: { fontSize: 17, fontWeight: '800', color: C.text },
+  recCount: { fontSize: 12, color: C.muted, fontWeight: '500' },
 
-  // ── Empty state ───────────────────────────────────────────────────────────
   empty:       { alignItems: 'center', paddingVertical: 40, paddingHorizontal: 32 },
   emptyTitle:  { fontSize: 17, fontWeight: '700', color: C.text, marginTop: 10 },
   emptySub:    { fontSize: 13, color: C.muted, marginTop: 4, marginBottom: 16, textAlign: 'center' },

@@ -222,7 +222,7 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
   // re-render. The FlatList handles its own position internally.
   useEffect(() => {
     const timer = setInterval(() => {
-      const next = currentIndexRef.current + 1;
+      const next = (currentIndexRef.current + 1) % TOTAL;
       currentIndexRef.current = next;
       flatListRef.current?.scrollToIndex({ index: next, animated: true });
     }, 4000);
