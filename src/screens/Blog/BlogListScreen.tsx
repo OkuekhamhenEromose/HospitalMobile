@@ -1,6 +1,7 @@
 // src/screens/Blog/BlogScreen.tsx
+// Live API version — fetches from the Django/S3 backend, mirrors the web app.
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -14,12 +15,14 @@ import {
   Linking,
   ActivityIndicator,
   Alert,
+  RefreshControl,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
-// ── CHANGE: added G to support the Mental Wellness icon ────────────────────────
 import Svg, { Path, G } from 'react-native-svg';
 import { useAuth } from '../../contexts/AuthContext';
+import { apiService } from '../../services/api';
+import type { BlogPost } from '../../types';
 
 const { width } = Dimensions.get('window');
 
@@ -38,163 +41,50 @@ const C = {
   green:     '#22c55e',
 };
 
-const DOCTOR_IMG = require('../../../assets/images/hero-doctor.jpg');
+// ── Placeholder when post has no image ───────────────────────────────────────
+const FALLBACK_IMG = require('../../../assets/images/hero-doctor.jpg');
 
-// ── MOCK DATA ─────────────────────────────────────────────────────────────────
-const MOCK_POSTS = [
-  {
-    id: '1',
-    title: 'Understanding Hypertension: Causes, Risks & Management',
-    description:
-      'Hypertension, or high blood pressure, is a common condition that affects millions of Nigerians. Left unmanaged, it can lead to stroke, heart failure, and kidney disease. Our specialists share practical tips to keep your blood pressure in check.',
-    category: 'General Health',
-    date: 'Jun 15, 2026',
-    readTime: '6 min read',
-    image: DOCTOR_IMG,
-    slug: 'understanding-hypertension',
-    subheadings: [
-      { title: 'What is hypertension?',   description: 'Hypertension occurs when the force of blood against artery walls is consistently too high.' },
-      { title: 'Risk factors in Nigeria', description: 'Excessive salt intake, stress, obesity, and genetics are primary risk factors.' },
-      { title: 'Lifestyle modifications', description: 'Regular exercise, reduced sodium intake, and stress management can significantly lower blood pressure.' },
-    ],
-  },
-  {
-    id: '2',
-    title: 'Malaria Prevention & Treatment in Lagos: What You Need to Know',
-    description:
-      'Malaria remains one of the leading causes of hospital visits in Lagos. Early diagnosis and prompt treatment are key to preventing complications. Learn about the latest guidelines and preventive measures recommended by our medical team.',
-    category: 'Preventive Care',
-    date: 'Jun 10, 2026',
-    readTime: '5 min read',
-    image: DOCTOR_IMG,
-    slug: 'malaria-prevention-lagos',
-    subheadings: [
-      { title: 'Recognising malaria symptoms', description: 'Fever, chills, and headache are the earliest signs. Seek care within 24 hours.' },
-      { title: 'Approved treatment regimens',  description: 'WHO-recommended artemisinin-based combination therapies are our first-line treatment.' },
-    ],
-  },
-  {
-    id: '3',
-    title: 'Diabetes Management: Living Well with Type 2 Diabetes',
-    description:
-      'Type 2 diabetes is increasingly common in urban Nigeria. With the right diet, exercise, and medication plan, patients can live full, healthy lives. Our endocrinology team breaks down everything you need to know about blood sugar control.',
-    category: 'General Health',
-    date: 'Jun 5, 2026',
-    readTime: '7 min read',
-    image: DOCTOR_IMG,
-    slug: 'diabetes-management',
-    subheadings: [
-      { title: 'Blood sugar monitoring',         description: 'Daily home monitoring helps you understand how food and activity affect your glucose levels.' },
-      { title: 'Dietary recommendations',        description: 'Low glycaemic index foods, reduced refined carbs, and portion control are foundational.' },
-      { title: 'Exercise & insulin sensitivity', description: 'Regular moderate exercise improves insulin sensitivity and reduces HbA1c.' },
-    ],
-  },
-  {
-    id: '4',
-    title: 'Maternal Health: Antenatal Care at Etta-Atlantic',
-    description:
-      'Good antenatal care is the foundation of a safe pregnancy. Our obstetrics team provides comprehensive maternal healthcare from first trimester through delivery, ensuring the health of both mother and baby at every stage.',
-    category: "Women's Health",
-    date: 'May 28, 2026',
-    readTime: '5 min read',
-    image: DOCTOR_IMG,
-    slug: 'maternal-health-antenatal',
-    subheadings: [
-      { title: 'First trimester checks',     description: 'Early screening for gestational diabetes, anaemia, and foetal abnormalities.' },
-      { title: 'Nutrition during pregnancy', description: 'Folic acid, iron, and calcium supplementation are essential in all trimesters.' },
-    ],
-  },
-  {
-    id: '5',
-    title: 'Sickle Cell Disease: Living Better with SCD',
-    description:
-      'Nigeria has the highest burden of sickle cell disease in the world. Our haematology unit offers comprehensive SCD care including crisis management, hydroxyurea therapy, and genetic counselling for families.',
-    category: 'Med Updates',
-    date: 'May 20, 2026',
-    readTime: '8 min read',
-    image: DOCTOR_IMG,
-    slug: 'sickle-cell-disease-management',
-    subheadings: [
-      { title: 'Vaso-occlusive crisis', description: 'Pain crises require prompt hydration, analgesia, and oxygen therapy.' },
-      { title: 'Hydroxyurea therapy',   description: 'Evidence shows hydroxyurea reduces crisis frequency by up to 50%.' },
-      { title: 'Genetic counselling',   description: 'Carrier screening and counselling help families make informed reproductive decisions.' },
-    ],
-  },
-  {
-    id: '6',
-    title: 'Mental Wellness in the Workplace: Breaking the Stigma',
-    description:
-      "Mental health challenges are rising in Lagos's fast-paced work environment. Anxiety, burnout, and depression are real and treatable conditions. Our team discusses practical strategies for managing mental wellness at work and at home.",
-    category: 'Mental Wellness',
-    date: 'May 12, 2026',
-    readTime: '6 min read',
-    image: DOCTOR_IMG,
-    slug: 'mental-wellness-workplace',
-    subheadings: [
-      { title: 'Identifying burnout early',    description: 'Exhaustion, cynicism, and reduced efficacy are the three pillars of burnout.' },
-      { title: 'Practical coping strategies', description: 'Mindfulness, structured breaks, and social connection are evidence-based interventions.' },
-    ],
-  },
-  {
-    id: '7',
-    title: 'Heart Health: Reducing Your Cardiovascular Risk',
-    description:
-      'Cardiovascular disease is the leading cause of death worldwide. Understanding your personal risk factors and making targeted lifestyle changes can dramatically reduce your chance of a heart attack or stroke.',
-    category: 'Healthy Living',
-    date: 'May 5, 2026',
-    readTime: '7 min read',
-    image: DOCTOR_IMG,
-    slug: 'heart-health-cardiovascular-risk',
-    subheadings: [
-      { title: 'Know your numbers',    description: 'Track blood pressure, cholesterol, blood sugar, and BMI regularly.' },
-      { title: 'The role of exercise', description: '150 minutes of moderate aerobic activity per week is the minimum recommended dose.' },
-    ],
-  },
-];
+// ── Media URL normaliser (matches web utils/mediaUrl.ts) ─────────────────────
+const S3_BASE = 'https://etha-hospital-clone-app.s3.eu-north-1.amazonaws.com/media/';
 
-// ── CHANGE: Mental Wellness SVG icon ──────────────────────────────────────────
-// Ported from the mask-based SVG: the mask white areas become strokes/fills
-// at the icon colour; the brain fill uses 33 % opacity to match the original
-// mask's #555 gray value (85/255 ≈ 0.33).
+function normalizeMediaUrl(url: string | null | undefined): string | null {
+  if (!url || url.trim() === '') return null;
+  if (url.startsWith('http://') || url.startsWith('https://')) return url;
+  const clean = url.startsWith('media/') ? url.slice(6) : url;
+  return `${S3_BASE}${clean}`;
+}
+
+// ── Blog category type ────────────────────────────────────────────────────────
+interface BlogCategory {
+  id: number;
+  name: string;
+  slug: string;
+  post_count: number;
+}
+
+// ── SVG icons ─────────────────────────────────────────────────────────────────
 const MentalWellnessIcon = ({ color, size }: { color: string; size: number }) => (
   <Svg width={size} height={size} viewBox="0 0 48 48">
     <G fill="none" stroke={color}>
-      {/* Speech-bubble outline */}
-      <Path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth={4.667}
+      <Path strokeLinecap="round" strokeLinejoin="round" strokeWidth={4.667}
         d="M19.036 44q-1.47-4.793-4.435-7.147c-2.965-2.353-7.676-.89-9.416-3.318s1.219-6.892 2.257-9.526s-3.98-3.565-3.394-4.313q.585-.748 7.609-4.316Q13.652 4 26.398 4C39.144 4 44 14.806 44 21.68c0 6.872-5.88 14.276-14.256 15.873q-1.123 1.636 3.24 6.447"
       />
-      {/* Brain shape — semi-transparent fill mirrors the mask's #555 value */}
-      <Path
-        fill={color}
-        fillOpacity={0.33}
-        fillRule="evenodd"
-        strokeLinejoin="round"
-        strokeWidth={4}
+      <Path fill={color} fillOpacity={0.33} fillRule="evenodd" strokeLinejoin="round" strokeWidth={4}
         d="M19.5 14.5q-.981 3.801.583 5.339q1.563 1.537 5.328 2.01q-.855 4.903 2.083 4.6q2.937-.302 3.53-2.44q4.59 1.29 4.976-2.16c.385-3.45-1.475-6.201-2.238-6.201s-2.738-.093-2.738-1.148s-2.308-1.65-4.391-1.65s-.83-1.405-3.69-.85q-2.86.555-3.443 2.5Z"
       />
-      {/* Stem line */}
-      <Path
-        strokeLinecap="round"
-        strokeWidth={4}
+      <Path strokeLinecap="round" strokeWidth={4}
         d="M30.5 25.5c-1.017.631-2.412 1.68-3 2.5c-1.469 2.05-2.66 3.298-2.92 4.608"
       />
     </G>
   </Svg>
 );
 
-// ── CHANGE: branded social-share SVG icons ────────────────────────────────────
-
 const FacebookIcon = ({ size = 14 }: { size?: number }) => (
   <Svg width={size} height={size} viewBox="0 0 256 256">
-    <Path
-      fill="#1877f2"
+    <Path fill="#1877f2"
       d="M256 128C256 57.308 198.692 0 128 0S0 57.308 0 128c0 63.888 46.808 116.843 108 126.445V165H75.5v-37H108V99.8c0-32.08 19.11-49.8 48.348-49.8C170.352 50 185 52.5 185 52.5V84h-16.14C152.959 84 148 93.867 148 103.99V128h35.5l-5.675 37H148v89.445c61.192-9.602 108-62.556 108-126.445"
     />
-    <Path
-      fill="#fff"
+    <Path fill="#fff"
       d="m177.825 165l5.675-37H148v-24.01C148 93.866 152.959 84 168.86 84H185V52.5S170.352 50 156.347 50C127.11 50 108 67.72 108 99.8V128H75.5v37H108v89.445A129 129 0 0 0 128 256a129 129 0 0 0 20-1.555V165z"
     />
   </Svg>
@@ -202,8 +92,7 @@ const FacebookIcon = ({ size = 14 }: { size?: number }) => (
 
 const XIcon = ({ size = 14 }: { size?: number }) => (
   <Svg width={size} height={size} viewBox="0 0 128 128">
-    <Path
-      fill={C.dark}
+    <Path fill={C.dark}
       d="M75.916 54.2L122.542 0h-11.05L71.008 47.06L38.672 0H1.376l48.898 71.164L1.376 128h11.05L55.18 78.303L89.328 128h37.296L75.913 54.2ZM60.782 71.79l-4.955-7.086l-39.42-56.386h16.972L65.19 53.824l4.954 7.086l41.353 59.15h-16.97L60.782 71.793Z"
     />
   </Svg>
@@ -211,63 +100,15 @@ const XIcon = ({ size = 14 }: { size?: number }) => (
 
 const LinkedInIcon = ({ size = 14 }: { size?: number }) => (
   <Svg width={size} height={size} viewBox="0 0 128 128">
-    <Path
-      fill="#0076b2"
+    <Path fill="#0076b2"
       d="M116 3H12a8.91 8.91 0 0 0-9 8.8v104.42a8.91 8.91 0 0 0 9 8.78h104a8.93 8.93 0 0 0 9-8.81V11.77A8.93 8.93 0 0 0 116 3"
     />
-    <Path
-      fill="#fff"
+    <Path fill="#fff"
       d="M21.06 48.73h18.11V107H21.06zm9.06-29a10.5 10.5 0 1 1-10.5 10.49a10.5 10.5 0 0 1 10.5-10.49m20.41 29h17.36v8h.24c2.42-4.58 8.32-9.41 17.13-9.41C103.6 47.28 107 59.35 107 75v32H88.89V78.65c0-6.75-.12-15.44-9.41-15.44s-10.87 7.36-10.87 15V107H50.53z"
     />
   </Svg>
 );
 
-// ── CHANGE: categories now use an optional SvgIcon field ──────────────────────
-interface CategoryItem {
-  label: string;
-  icon?: string;
-  SvgIcon?: React.FC<{ color: string; size: number }>;
-}
-
-const CATEGORIES: CategoryItem[] = [
-  { label: 'All',             icon: 'grid-outline'             },
-  { label: 'General Health',  icon: 'medical-outline'          },
-  // ── CHANGE: Mental Wellness uses the new SVG icon instead of heart-outline ──
-  { label: 'Mental Wellness', SvgIcon: MentalWellnessIcon      },
-  { label: 'Preventive Care', icon: 'shield-checkmark-outline' },
-  { label: 'Med Updates',     icon: 'newspaper-outline'        },
-  { label: 'Healthy Living',  icon: 'leaf-outline'             },
-];
-
-// ── CHANGE: share platforms now carry icon components instead of text labels ──
-interface SharePlatform {
-  key: string;
-  Icon: React.FC<{ size?: number }>;
-}
-
-const SHARE_PLATFORMS: SharePlatform[] = [
-  { key: 'facebook', Icon: FacebookIcon },
-  { key: 'twitter',  Icon: XIcon        },
-  { key: 'linkedin', Icon: LinkedInIcon },
-];
-
-function sharePost(platform: string, post: typeof MOCK_POSTS[0]) {
-  const url  = `https://ettaatlantic.com/blog/${post.slug}`;
-  const urls: Record<string, string> = {
-    facebook: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`,
-    twitter:  `https://twitter.com/intent/tweet?url=${encodeURIComponent(url)}&text=${encodeURIComponent(post.title)}`,
-    linkedin: `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}`,
-  };
-  if (urls[platform]) Linking.openURL(urls[platform]);
-}
-
-// ── Carousel constants ────────────────────────────────────────────────────────
-const REAL_COUNT  = MOCK_POSTS.length;
-const TOTAL       = REAL_COUNT * 100 * 2;
-const START_INDEX = Math.floor(TOTAL / 2);
-const CAROUSEL_DATA = Array.from({ length: TOTAL }, (_, i) => MOCK_POSTS[i % REAL_COUNT]);
-
-// ── Overlay SVG icons (unchanged) ────────────────────────────────────────────
 const SignOutIcon = ({ color = C.text }: { color?: string }) => (
   <Svg width={24} height={24} viewBox="0 0 24 24">
     <Path d="M0 0h24v24H0z" fill="none" />
@@ -290,9 +131,64 @@ const ProfileIcon = ({ color = C.text }: { color?: string }) => (
   </Svg>
 );
 
+// ── Share helpers ─────────────────────────────────────────────────────────────
+interface SharePlatform {
+  key: string;
+  Icon: React.FC<{ size?: number }>;
+}
+
+const SHARE_PLATFORMS: SharePlatform[] = [
+  { key: 'facebook', Icon: FacebookIcon },
+  { key: 'twitter',  Icon: XIcon        },
+  { key: 'linkedin', Icon: LinkedInIcon },
+];
+
+function sharePost(platform: string, post: BlogPost) {
+  const url = `https://ettaatlantic.com/blog/${post.slug}`;
+  const urls: Record<string, string> = {
+    facebook: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`,
+    twitter:  `https://twitter.com/intent/tweet?url=${encodeURIComponent(url)}&text=${encodeURIComponent(post.title)}`,
+    linkedin: `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}`,
+  };
+  if (urls[platform]) Linking.openURL(urls[platform]);
+}
+
+// ── ALL_CATEGORY sentinel ─────────────────────────────────────────────────────
+const ALL_CATEGORY: BlogCategory = { id: 0, name: 'All', slug: '', post_count: 0 };
+
+// ── Category icon map ─────────────────────────────────────────────────────────
+function getCategoryIcon(name: string): { icon?: string; SvgIcon?: React.FC<{ color: string; size: number }> } {
+  const n = name.toLowerCase();
+  if (n.includes('mental'))    return { SvgIcon: MentalWellnessIcon };
+  if (n.includes('general'))   return { icon: 'medical-outline' };
+  if (n.includes('preventive')) return { icon: 'shield-checkmark-outline' };
+  if (n.includes('med') || n.includes('update')) return { icon: 'newspaper-outline' };
+  if (n.includes('healthy') || n.includes('living')) return { icon: 'leaf-outline' };
+  if (n.includes('women'))     return { icon: 'heart-outline' };
+  return { icon: 'grid-outline' };
+}
+
 // ── Card dimensions ───────────────────────────────────────────────────────────
 const CARD_IMG_W = width * 0.32;
 const CARD_IMG_H = CARD_IMG_W * 1.18;
+
+// ── Format date ───────────────────────────────────────────────────────────────
+function formatDate(raw: string): string {
+  try {
+    return new Date(raw).toLocaleDateString('en-US', {
+      day: 'numeric', month: 'short', year: 'numeric',
+    });
+  } catch {
+    return raw;
+  }
+}
+
+// ── Estimate read time ────────────────────────────────────────────────────────
+function readTime(post: BlogPost): string {
+  const words = ((post.content ?? '') + ' ' + (post.description ?? '')).split(/\s+/).length;
+  const mins  = Math.max(1, Math.round(words / 200));
+  return `${mins} min read`;
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 interface BlogScreenProps { navigation?: any; }
@@ -300,91 +196,147 @@ interface BlogScreenProps { navigation?: any; }
 export default function BlogScreen({ navigation }: BlogScreenProps) {
   const { logout } = useAuth();
 
-  const currentIndexRef = useRef(START_INDEX);
-  const flatListRef     = useRef<FlatList>(null);
-  const [signingOut, setSigningOut] = useState(false);
-  const [search,     setSearch]     = useState('');
-  const [activeTab,  setActiveTab]  = useState(0);
-  const [expanded,   setExpanded]   = useState<Record<string, boolean>>({});
+  // ── State ──────────────────────────────────────────────────────────────────
+  const [posts,       setPosts]       = useState<BlogPost[]>([]);
+  const [categories,  setCategories]  = useState<BlogCategory[]>([ALL_CATEGORY]);
+  const [activeTab,   setActiveTab]   = useState(0);        // index into categories[]
+  const [search,      setSearch]      = useState('');
+  const [loading,     setLoading]     = useState(true);
+  const [refreshing,  setRefreshing]  = useState(false);
+  const [signingOut,  setSigningOut]  = useState(false);
+  const [expanded,    setExpanded]    = useState<Record<string, boolean>>({});
 
-  // ── Auto-advance ──────────────────────────────────────────────────────────
+  // Carousel refs
+  const carouselRef     = useRef<FlatList>(null);
+  const carouselIndex   = useRef(0);
+  const carouselData    = posts.length ? posts : [];
+
+  // ── Load categories ────────────────────────────────────────────────────────
+  const loadCategories = useCallback(async () => {
+    try {
+      const cats = await apiService.getBlogCategories();
+      setCategories([ALL_CATEGORY, ...cats]);
+    } catch {
+      // non-critical — keep the ALL sentinel
+    }
+  }, []);
+
+  // ── Load posts ─────────────────────────────────────────────────────────────
+  const loadPosts = useCallback(async (categorySlug?: string) => {
+    try {
+      setLoading(true);
+      const data = await apiService.getBlogPosts(categorySlug || undefined);
+      setPosts(data as unknown as BlogPost[]);
+    } catch (err: any) {
+      Alert.alert('Error', err?.message ?? 'Failed to load blog posts.');
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  }, []);
+
   useEffect(() => {
+    loadCategories();
+    loadPosts();
+  }, [loadCategories, loadPosts]);
+
+  // ── Re-fetch when category tab changes ────────────────────────────────────
+  const handleTabChange = (idx: number) => {
+    setActiveTab(idx);
+    setSearch('');
+    const slug = categories[idx]?.slug ?? '';
+    loadPosts(slug || undefined);
+  };
+
+  // ── Pull to refresh ───────────────────────────────────────────────────────
+  const handleRefresh = () => {
+    setRefreshing(true);
+    const slug = categories[activeTab]?.slug ?? '';
+    loadPosts(slug || undefined);
+  };
+
+  // ── Auto-advance carousel ─────────────────────────────────────────────────
+  useEffect(() => {
+    if (carouselData.length < 2) return;
     const timer = setInterval(() => {
-      const next = currentIndexRef.current + 1;
-      currentIndexRef.current = next;
-      flatListRef.current?.scrollToIndex({ index: next, animated: true });
+      const next = (carouselIndex.current + 1) % carouselData.length;
+      carouselIndex.current = next;
+      carouselRef.current?.scrollToIndex({ index: next, animated: true });
     }, 4000);
     return () => clearInterval(timer);
-  }, []);
+  }, [carouselData.length]);
 
   // ── Sign-out ──────────────────────────────────────────────────────────────
   const handleSignOut = () => {
-    Alert.alert(
-      'Sign Out',
-      'Are you sure you want to sign out?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Sign Out',
-          style: 'destructive',
-          onPress: async () => {
-            setSigningOut(true);
-            try   { await logout(); }
-            catch { setSigningOut(false); }
-          },
+    Alert.alert('Sign Out', 'Are you sure you want to sign out?', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Sign Out', style: 'destructive',
+        onPress: async () => {
+          setSigningOut(true);
+          try   { await logout(); }
+          catch { setSigningOut(false); }
         },
-      ],
-    );
+      },
+    ]);
   };
-
-  const handleProfilePress = () => navigation?.navigate?.('Dashboard');
 
   const toggleExpand = (key: string) =>
     setExpanded(prev => ({ ...prev, [key]: !prev[key] }));
 
-  const filteredPosts = MOCK_POSTS.filter(p => {
-    const q           = search.toLowerCase();
-    const cat         = CATEGORIES[activeTab].label;
-    const matchSearch = !q || p.title.toLowerCase().includes(q) || p.description.toLowerCase().includes(q);
-    const matchCat    = cat === 'All' || p.category === cat;
-    return matchSearch && matchCat;
+  // ── Local client-side search filter ──────────────────────────────────────
+  const filteredPosts = posts.filter(p => {
+    if (!search.trim()) return true;
+    const q = search.toLowerCase();
+    return p.title.toLowerCase().includes(q) || p.description?.toLowerCase().includes(q);
   });
 
+  // ── Image source helper ───────────────────────────────────────────────────
+  function imgSource(post: BlogPost): any {
+    const url = normalizeMediaUrl((post as any).featured_image_url ?? (post as any).featured_image);
+    return url ? { uri: url } : FALLBACK_IMG;
+  }
+
   // ── Carousel slide ────────────────────────────────────────────────────────
-  const renderCarouselSlide = ({ item }: { item: typeof MOCK_POSTS[0] }) => (
+  const renderCarouselSlide = ({ item }: { item: BlogPost }) => (
     <TouchableOpacity
       style={h.slide}
       activeOpacity={0.95}
       onPress={() => navigation?.navigate?.('BlogPost', { post: item })}
     >
-      <Image source={item.image} style={h.img} resizeMode="cover" />
+      <Image source={imgSource(item)} style={h.img} resizeMode="cover" />
       <View style={h.grad}>
         <View style={h.authorRow}>
-          <Image source={DOCTOR_IMG} style={h.avatar} resizeMode="cover" />
+          <View style={h.avatarWrap}>
+            <Text style={h.avatarText}>EA</Text>
+          </View>
           <View>
-            <Text style={h.authorName}>Etha-Atlantic</Text>
-            <Text style={h.authorDate}>{item.date}</Text>
+            <Text style={h.authorName}>{(item as any).author_name ?? 'Etha-Atlantic'}</Text>
+            <Text style={h.authorDate}>{formatDate(item.created_at)}</Text>
           </View>
           <View style={h.catBadge}>
-            <Text style={h.catBadgeTxt}>{item.category}</Text>
+            <Text style={h.catBadgeTxt}>
+              {(item as any).category?.name ?? 'General Health'}
+            </Text>
           </View>
         </View>
         <Text style={h.title} numberOfLines={2}>{item.title}</Text>
       </View>
       <View style={h.timePill}>
         <Ionicons name="time-outline" size={11} color={C.white} />
-        <Text style={h.timeTxt}>{item.readTime}</Text>
+        <Text style={h.timeTxt}>{readTime(item)}</Text>
       </View>
     </TouchableOpacity>
   );
 
   // ── Blog list card ────────────────────────────────────────────────────────
-  const renderCard = ({ item }: { item: typeof MOCK_POSTS[0] }) => {
+  const renderCard = ({ item }: { item: BlogPost }) => {
     const descKey = 'card_' + item.id;
     const isExp   = !!expanded[descKey];
     const SHORT   = 90;
-    const isLong  = item.description.length > SHORT;
-    const display = isExp || !isLong ? item.description : item.description.slice(0, SHORT);
+    const desc    = item.description ?? '';
+    const isLong  = desc.length > SHORT;
+    const display = isExp || !isLong ? desc : desc.slice(0, SHORT);
 
     return (
       <TouchableOpacity
@@ -393,19 +345,21 @@ export default function BlogScreen({ navigation }: BlogScreenProps) {
         activeOpacity={0.93}
       >
         <View style={bc.imgWrap}>
-          <Image source={item.image} style={bc.img} resizeMode="cover" />
+          <Image source={imgSource(item)} style={bc.img} resizeMode="cover" />
           <TouchableOpacity style={bc.bookmarkBtn} activeOpacity={0.8}>
             <Ionicons name="bookmark-outline" size={13} color={C.white} />
           </TouchableOpacity>
           <View style={bc.timeBadge}>
             <Ionicons name="time-outline" size={9} color={C.white} />
-            <Text style={bc.timeTxt}>{item.readTime}</Text>
+            <Text style={bc.timeTxt}>{readTime(item)}</Text>
           </View>
         </View>
 
         <View style={bc.content}>
           <View style={bc.catBadge}>
-            <Text style={bc.catBadgeTxt}>{item.category}</Text>
+            <Text style={bc.catBadgeTxt}>
+              {(item as any).category?.name ?? 'General Health'}
+            </Text>
           </View>
           <Text style={bc.title} numberOfLines={2}>{item.title}</Text>
           <Text style={bc.desc}>
@@ -423,10 +377,9 @@ export default function BlogScreen({ navigation }: BlogScreenProps) {
           )}
           <View style={bc.metaRow}>
             <Ionicons name="calendar-outline" size={10} color={C.muted} />
-            <Text style={bc.metaTxt}>{item.date}</Text>
+            <Text style={bc.metaTxt}>{formatDate(item.created_at)}</Text>
           </View>
 
-          {/* ── CHANGE: branded SVG share icons, no borders ───────────────── */}
           <View style={bc.footer}>
             <Text style={bc.shareLabel}>Share:</Text>
             <View style={bc.shareRow}>
@@ -454,42 +407,69 @@ export default function BlogScreen({ navigation }: BlogScreenProps) {
     );
   };
 
+  // ── Empty / loading state ─────────────────────────────────────────────────
+  const renderEmpty = () => {
+    if (loading) return null; // skeleton handled by ListHeaderComponent loader
+    return (
+      <View style={s.empty}>
+        <Text style={{ fontSize: 38 }}>🔍</Text>
+        <Text style={s.emptyTitle}>No posts found</Text>
+        <Text style={s.emptySub}>Try a different search or category</Text>
+        <TouchableOpacity
+          style={s.clearBtn}
+          onPress={() => { setSearch(''); handleTabChange(0); }}
+        >
+          <Text style={s.clearBtnTxt}>Clear Filters</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  };
+
   // ── Render ────────────────────────────────────────────────────────────────
   return (
     <View style={s.root}>
       <FlatList
-        data={filteredPosts}
-        keyExtractor={item => item.id}
+        data={loading ? [] : filteredPosts}
+        keyExtractor={item => String(item.id)}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: 48 }}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={handleRefresh}
+            colors={[C.primary]}
+            tintColor={C.primary}
+          />
+        }
+        ListEmptyComponent={renderEmpty}
         ListHeaderComponent={(
           <>
-            {/* ══ HERO ══════════════════════════════════════════════════════ */}
+            {/* ══ HERO CAROUSEL ════════════════════════════════════════════ */}
             <SafeAreaView style={s.heroSafeArea}>
               <View>
-                <FlatList
-                  ref={flatListRef}
-                  data={CAROUSEL_DATA}
-                  keyExtractor={(_, i) => i.toString()}
-                  horizontal
-                  pagingEnabled
-                  showsHorizontalScrollIndicator={false}
-                  initialScrollIndex={START_INDEX}
-                  getItemLayout={(_, index) => ({
-                    length: width,
-                    offset: width * index,
-                    index,
-                  })}
-                  windowSize={3}
-                  removeClippedSubviews
-                  renderItem={renderCarouselSlide}
-                  onMomentumScrollEnd={e => {
-                    const idx = Math.round(e.nativeEvent.contentOffset.x / width);
-                    currentIndexRef.current = idx;
-                  }}
-                />
+                {carouselData.length > 0 ? (
+                  <FlatList
+                    ref={carouselRef}
+                    data={carouselData}
+                    keyExtractor={(_, i) => i.toString()}
+                    horizontal
+                    pagingEnabled
+                    showsHorizontalScrollIndicator={false}
+                    getItemLayout={(_, index) => ({ length: width, offset: width * index, index })}
+                    windowSize={3}
+                    removeClippedSubviews
+                    renderItem={renderCarouselSlide}
+                    onMomentumScrollEnd={e => {
+                      carouselIndex.current = Math.round(e.nativeEvent.contentOffset.x / width);
+                    }}
+                  />
+                ) : (
+                  <View style={[h.slide, { justifyContent: 'center', alignItems: 'center' }]}>
+                    <ActivityIndicator size="large" color={C.primary} />
+                  </View>
+                )}
 
-                {/* Overlay */}
+                {/* Icon overlay */}
                 <View style={s.heroOverlay}>
                   <View style={s.heroOverlayRow}>
                     <TouchableOpacity
@@ -503,7 +483,6 @@ export default function BlogScreen({ navigation }: BlogScreenProps) {
                         : <SignOutIcon color={C.text} />
                       }
                     </TouchableOpacity>
-
                     <View style={s.rightIconsRow}>
                       <TouchableOpacity
                         style={s.iconBtn}
@@ -514,7 +493,7 @@ export default function BlogScreen({ navigation }: BlogScreenProps) {
                       </TouchableOpacity>
                       <TouchableOpacity
                         style={s.iconBtn}
-                        onPress={handleProfilePress}
+                        onPress={() => navigation?.navigate?.('Dashboard')}
                         activeOpacity={0.7}
                       >
                         <ProfileIcon color={C.primary} />
@@ -547,30 +526,34 @@ export default function BlogScreen({ navigation }: BlogScreenProps) {
                 </View>
               </View>
 
-              {/* ── CHANGE: renders MentalWellnessIcon via SvgIcon when present ── */}
+              {/* Category tabs — built dynamically from API */}
               <ScrollView
                 horizontal
                 showsHorizontalScrollIndicator={false}
                 contentContainerStyle={s.tabsRow}
                 style={{ marginTop: 12 }}
               >
-                {CATEGORIES.map((cat, i) => {
+                {categories.map((cat, i) => {
                   const isActive  = i === activeTab;
                   const iconColor = isActive ? C.white : C.sub;
+                  const { icon, SvgIcon } = i === 0
+                    ? { icon: 'grid-outline', SvgIcon: undefined }
+                    : getCategoryIcon(cat.name);
+
                   return (
                     <TouchableOpacity
-                      key={i}
+                      key={cat.id}
                       style={[s.tab, isActive && s.tabOn]}
-                      onPress={() => setActiveTab(i)}
+                      onPress={() => handleTabChange(i)}
                       activeOpacity={0.8}
                     >
-                      {cat.SvgIcon ? (
-                        <cat.SvgIcon color={iconColor} size={13} />
+                      {SvgIcon ? (
+                        <SvgIcon color={iconColor} size={13} />
                       ) : (
-                        <Ionicons name={cat.icon as any} size={13} color={iconColor} />
+                        <Ionicons name={icon as any} size={13} color={iconColor} />
                       )}
                       <Text style={[s.tabTxt, isActive && s.tabTxtOn]}>
-                        {cat.label}
+                        {cat.name}
                       </Text>
                     </TouchableOpacity>
                   );
@@ -581,20 +564,25 @@ export default function BlogScreen({ navigation }: BlogScreenProps) {
             {/* ══ ARTICLES HEADER ═══════════════════════════════════════════ */}
             <View style={s.recHeader}>
               <Text style={s.recTitle}>Articles</Text>
-              <Text style={s.recCount}>{filteredPosts.length} posts</Text>
+              {loading
+                ? <ActivityIndicator size="small" color={C.primary} />
+                : <Text style={s.recCount}>{filteredPosts.length} posts</Text>
+              }
             </View>
 
-            {filteredPosts.length === 0 && (
-              <View style={s.empty}>
-                <Text style={{ fontSize: 38 }}>🔍</Text>
-                <Text style={s.emptyTitle}>No posts found</Text>
-                <Text style={s.emptySub}>Try a different search or category</Text>
-                <TouchableOpacity
-                  style={s.clearBtn}
-                  onPress={() => { setSearch(''); setActiveTab(0); }}
-                >
-                  <Text style={s.clearBtnTxt}>Clear Filters</Text>
-                </TouchableOpacity>
+            {/* Loading skeleton rows */}
+            {loading && (
+              <View style={{ paddingHorizontal: 16, gap: 12 }}>
+                {[1, 2, 3].map(k => (
+                  <View key={k} style={[bc.card, { opacity: 0.4 }]}>
+                    <View style={[bc.imgWrap, { backgroundColor: C.border }]} />
+                    <View style={[bc.content, { gap: 8 }]}>
+                      <View style={{ height: 10, backgroundColor: C.border, borderRadius: 4, width: '60%' }} />
+                      <View style={{ height: 8,  backgroundColor: C.border, borderRadius: 4, width: '90%' }} />
+                      <View style={{ height: 8,  backgroundColor: C.border, borderRadius: 4, width: '75%' }} />
+                    </View>
+                  </View>
+                ))}
               </View>
             )}
           </>
@@ -620,7 +608,13 @@ const h = StyleSheet.create({
     backgroundColor: 'rgba(17,24,39,0.76)', padding: 16,
   },
   authorRow:   { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 10 },
-  avatar:      { width: 34, height: 34, borderRadius: 17, borderWidth: 2, borderColor: C.white },
+  avatarWrap: {
+    width: 34, height: 34, borderRadius: 17,
+    borderWidth: 2, borderColor: C.white,
+    backgroundColor: C.primary,
+    justifyContent: 'center', alignItems: 'center',
+  },
+  avatarText:  { color: C.white, fontSize: 10, fontWeight: '800' },
   authorName:  { color: C.white, fontSize: 12, fontWeight: '700' },
   authorDate:  { color: 'rgba(255,255,255,0.65)', fontSize: 10, marginTop: 1 },
   catBadge: {
@@ -681,7 +675,6 @@ const bc = StyleSheet.create({
   footer:       { flexDirection: 'row', alignItems: 'center', gap: 5 },
   shareLabel:   { fontSize: 9, color: C.muted, fontWeight: '600' },
   shareRow:     { flexDirection: 'row', gap: 5, flex: 1, alignItems: 'center' },
-  // ── CHANGE: border removed — just a centred hit-target ────────────────────
   shareBtn: {
     width: 22, height: 22,
     justifyContent: 'center', alignItems: 'center',
@@ -696,19 +689,14 @@ const bc = StyleSheet.create({
 // ── Root / overlay styles ─────────────────────────────────────────────────────
 const s = StyleSheet.create({
   root: { flex: 1, backgroundColor: C.bg },
-
   heroSafeArea: { backgroundColor: C.bg },
-
   heroOverlay:    { position: 'absolute', top: 0, left: 0, right: 0 },
   heroOverlayRow: {
-    flexDirection: 'row', justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
     paddingHorizontal: 16, paddingTop: 6,
   },
   rightIconsRow: { flexDirection: 'row', gap: 8 },
   iconBtn:       { width: 40, height: 40, justifyContent: 'center', alignItems: 'center' },
-
-  // ── CHANGE: paddingTop reduced from 16 → 4 to close the gap to the hero ───
   searchOuter: { paddingHorizontal: 16, paddingTop: 4, paddingBottom: 4 },
   searchBar: {
     flexDirection: 'row', alignItems: 'center', gap: 10,
@@ -723,7 +711,6 @@ const s = StyleSheet.create({
     backgroundColor: C.primary,
     justifyContent: 'center', alignItems: 'center',
   },
-
   tabsRow: { paddingRight: 4, gap: 8 },
   tab: {
     flexDirection: 'row', alignItems: 'center', gap: 5,
@@ -734,14 +721,12 @@ const s = StyleSheet.create({
   tabOn:    { backgroundColor: C.primary, borderColor: C.primary },
   tabTxt:   { fontSize: 11, fontWeight: '600', color: C.sub },
   tabTxtOn: { color: C.white },
-
   recHeader: {
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
     paddingHorizontal: 16, paddingTop: 18, paddingBottom: 12,
   },
   recTitle: { fontSize: 17, fontWeight: '800', color: C.text },
   recCount: { fontSize: 12, color: C.muted, fontWeight: '500' },
-
   empty:       { alignItems: 'center', paddingVertical: 40, paddingHorizontal: 32 },
   emptyTitle:  { fontSize: 17, fontWeight: '700', color: C.text, marginTop: 10 },
   emptySub:    { fontSize: 13, color: C.muted, marginTop: 4, marginBottom: 16, textAlign: 'center' },
