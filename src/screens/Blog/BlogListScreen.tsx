@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   View,
   Text,
@@ -10,8 +10,6 @@ import {
   Dimensions,
   FlatList,
   Linking,
-  NativeSyntheticEvent,
-  NativeScrollEvent,
   ActivityIndicator,
   Alert,
 } from 'react-native';
@@ -37,10 +35,9 @@ const C = {
   green:     '#22c55e',
 };
 
-// ── LOCAL DOCTOR IMAGE (used as placeholder throughout) ───────────────────────
 const DOCTOR_IMG = require('../../../assets/images/hero-doctor.jpg');
 
-// ── MOCK DATA — no API needed ─────────────────────────────────────────────────
+// ── MOCK DATA ─────────────────────────────────────────────────────────────────
 const MOCK_POSTS = [
   {
     id: '1',
@@ -53,9 +50,9 @@ const MOCK_POSTS = [
     image: DOCTOR_IMG,
     slug: 'understanding-hypertension',
     subheadings: [
-      { title: 'What is hypertension?',       description: 'Hypertension occurs when the force of blood against artery walls is consistently too high.' },
-      { title: 'Risk factors in Nigeria',     description: 'Excessive salt intake, stress, obesity, and genetics are primary risk factors.' },
-      { title: 'Lifestyle modifications',     description: 'Regular exercise, reduced sodium intake, and stress management can significantly lower blood pressure.' },
+      { title: 'What is hypertension?',   description: 'Hypertension occurs when the force of blood against artery walls is consistently too high.' },
+      { title: 'Risk factors in Nigeria', description: 'Excessive salt intake, stress, obesity, and genetics are primary risk factors.' },
+      { title: 'Lifestyle modifications', description: 'Regular exercise, reduced sodium intake, and stress management can significantly lower blood pressure.' },
     ],
   },
   {
@@ -70,7 +67,7 @@ const MOCK_POSTS = [
     slug: 'malaria-prevention-lagos',
     subheadings: [
       { title: 'Recognising malaria symptoms', description: 'Fever, chills, and headache are the earliest signs. Seek care within 24 hours.' },
-      { title: 'Approved treatment regimens', description: 'WHO-recommended artemisinin-based combination therapies are our first-line treatment.' },
+      { title: 'Approved treatment regimens',  description: 'WHO-recommended artemisinin-based combination therapies are our first-line treatment.' },
     ],
   },
   {
@@ -91,7 +88,7 @@ const MOCK_POSTS = [
   },
   {
     id: '4',
-    title: "Maternal Health: Antenatal Care at Etta-Atlantic",
+    title: 'Maternal Health: Antenatal Care at Etta-Atlantic',
     description:
       'Good antenatal care is the foundation of a safe pregnancy. Our obstetrics team provides comprehensive maternal healthcare from first trimester through delivery, ensuring the health of both mother and baby at every stage.',
     category: "Women's Health",
@@ -115,9 +112,9 @@ const MOCK_POSTS = [
     image: DOCTOR_IMG,
     slug: 'sickle-cell-disease-management',
     subheadings: [
-      { title: 'Vaso-occlusive crisis',  description: 'Pain crises require prompt hydration, analgesia, and oxygen therapy.' },
-      { title: 'Hydroxyurea therapy',    description: 'Evidence shows hydroxyurea reduces crisis frequency by up to 50%.' },
-      { title: 'Genetic counselling',    description: 'Carrier screening and counselling help families make informed reproductive decisions.' },
+      { title: 'Vaso-occlusive crisis', description: 'Pain crises require prompt hydration, analgesia, and oxygen therapy.' },
+      { title: 'Hydroxyurea therapy',   description: 'Evidence shows hydroxyurea reduces crisis frequency by up to 50%.' },
+      { title: 'Genetic counselling',   description: 'Carrier screening and counselling help families make informed reproductive decisions.' },
     ],
   },
   {
@@ -152,19 +149,19 @@ const MOCK_POSTS = [
   },
 ];
 
-// ── Category tabs ─────────────────────────────────────────────────────────────
+// ── Categories ────────────────────────────────────────────────────────────────
 const CATEGORIES = [
-  { label: 'All',             icon: 'grid-outline'              },
-  { label: 'General Health',  icon: 'medical-outline'           },
-  { label: 'Mental Wellness', icon: 'heart-outline'             },
-  { label: 'Preventive Care', icon: 'shield-checkmark-outline'  },
-  { label: 'Med Updates',     icon: 'newspaper-outline'         },
-  { label: 'Healthy Living',  icon: 'leaf-outline'              },
+  { label: 'All',             icon: 'grid-outline'             },
+  { label: 'General Health',  icon: 'medical-outline'          },
+  { label: 'Mental Wellness', icon: 'heart-outline'            },
+  { label: 'Preventive Care', icon: 'shield-checkmark-outline' },
+  { label: 'Med Updates',     icon: 'newspaper-outline'        },
+  { label: 'Healthy Living',  icon: 'leaf-outline'             },
 ];
 
 // ── Share ─────────────────────────────────────────────────────────────────────
 const SHARE_PLATFORMS = [
-  { key: 'facebook', label: 'f' },
+  { key: 'facebook', label: 'f'  },
   { key: 'twitter',  label: '𝕏' },
   { key: 'linkedin', label: 'in' },
 ];
@@ -179,64 +176,46 @@ function sharePost(platform: string, post: typeof MOCK_POSTS[0]) {
   if (urls[platform]) Linking.openURL(urls[platform]);
 }
 
-// ── Infinite-loop carousel — same flash-free strategy as HomeScreen ───────────
+// ── Flash-free infinite carousel — identical strategy to HomeScreen ───────────
 //
-// We repeat the MOCK_POSTS array 100 times in each direction (200× total).
-// Starting at the midpoint means the user can never swipe to either end
-// in a normal session. The auto-timer only ever increments, so there is
-// no silent backward jump and therefore no flash.
+// MOCK_POSTS (7 items) repeated 200× = 1 400 slots.
+// START_INDEX = 700 (exact midpoint, always a multiple of 7).
+// Auto-timer only ever increments → no backward jump → no flash.
 
-const REAL_POSTS  = MOCK_POSTS;
-const REAL_COUNT  = REAL_POSTS.length;
+const REAL_COUNT  = MOCK_POSTS.length;          // 7
 const REPEAT      = 100;
-const TOTAL       = REAL_COUNT * REPEAT * 2;          // 1400 slots
-const START_INDEX = Math.floor(TOTAL / 2);            // 700 — always a multiple of REAL_COUNT
+const TOTAL       = REAL_COUNT * REPEAT * 2;    // 1 400
+const START_INDEX = Math.floor(TOTAL / 2);      // 700
 
 const CAROUSEL_DATA = Array.from(
   { length: TOTAL },
-  (_, i) => REAL_POSTS[i % REAL_COUNT],
+  (_, i) => MOCK_POSTS[i % REAL_COUNT],
 );
 
-// ── SVG icons (same as HomeScreen) ───────────────────────────────────────────
+// ── SVG icons — identical to HomeScreen ──────────────────────────────────────
 const SignOutIcon = ({ color = C.text }: { color?: string }) => (
   <Svg width={24} height={24} viewBox="0 0 24 24">
     <Path d="M0 0h24v24H0z" fill="none" />
-    <Path
-      fill={color}
-      d="M12.232 3.25H9.768c-.813 0-1.469 0-2 .043c-.546.045-1.026.14-1.47.366a3.75 3.75 0 0 0-1.64 1.639c-.226.444-.32.924-.365 1.47c-.043.531-.043 1.187-.043 2v6.464c0 .813 0 1.469.043 2c.045.546.14 1.026.366 1.47a3.75 3.75 0 0 0 1.639 1.64c.444.226.924.32 1.47.365c.531.043 1.187.043 2 .043h2.464c.813 0 1.469 0 2-.043c.546-.045 1.026-.14 1.47-.366a3.75 3.75 0 0 0 1.64-1.639c.226-.444.32-.924.365-1.47c.043-.531.043-1.187.043-2V15a.75.75 0 0 0-1.5 0v.2c0 .852 0 1.447-.038 1.91c-.038.453-.107.714-.207.912c-.216.423-.56.767-.983.983c-.198.1-.459.17-.913.207c-.462.037-1.056.038-1.909.038H9.8c-.852 0-1.447 0-1.91-.038c-.453-.038-.714-.107-.911-.207a2.25 2.25 0 0 1-.984-.983c-.1-.198-.17-.459-.207-.913c-.037-.462-.038-1.057-.038-1.909V8.8c0-.852 0-1.447.038-1.91c.037-.453.107-.714.207-.911a2.25 2.25 0 0 1 .984-.984c.197-.1.458-.17.912-.207c.462-.037 1.057-.038 1.909-.038h2.4c.853 0 1.447 0 1.91.038c.453.037.714.107.912.207c.423.216.767.56.983.984c.1.197.17.458.207.912c.037.462.038 1.057.038 1.909V9a.75.75 0 0 0 1.5 0v-.232c0-.813 0-1.469-.043-2c-.045-.546-.14-1.026-.366-1.47a3.75 3.75 0 0 0-1.639-1.64c-.444-.226-.924-.32-1.47-.365c-.531-.043-1.187-.043-2-.043"
-    />
-    <Path
-      fill={color}
-      d="M12.47 8.47a.75.75 0 1 1 1.06 1.06l-1.72 1.72H20a.75.75 0 0 1 0 1.5h-8.19l1.72 1.72a.75.75 0 1 1-1.06 1.06l-3-3a.75.75 0 0 1 0-1.06z"
-    />
+    <Path fill={color} d="M12.232 3.25H9.768c-.813 0-1.469 0-2 .043c-.546.045-1.026.14-1.47.366a3.75 3.75 0 0 0-1.64 1.639c-.226.444-.32.924-.365 1.47c-.043.531-.043 1.187-.043 2v6.464c0 .813 0 1.469.043 2c.045.546.14 1.026.366 1.47a3.75 3.75 0 0 0 1.639 1.64c.444.226.924.32 1.47.365c.531.043 1.187.043 2 .043h2.464c.813 0 1.469 0 2-.043c.546-.045 1.026-.14 1.47-.366a3.75 3.75 0 0 0 1.64-1.639c.226-.444.32-.924.365-1.47c.043-.531.043-1.187.043-2V15a.75.75 0 0 0-1.5 0v.2c0 .852 0 1.447-.038 1.91c-.038.453-.107.714-.207.912c-.216.423-.56.767-.983.983c-.198.1-.459.17-.913.207c-.462.037-1.056.038-1.909.038H9.8c-.852 0-1.447 0-1.91-.038c-.453-.038-.714-.107-.911-.207a2.25 2.25 0 0 1-.984-.983c-.1-.198-.17-.459-.207-.913c-.037-.462-.038-1.057-.038-1.909V8.8c0-.852 0-1.447.038-1.91c.037-.453.107-.714.207-.911a2.25 2.25 0 0 1 .984-.984c.197-.1.458-.17.912-.207c.462-.037 1.057-.038 1.909-.038h2.4c.853 0 1.447 0 1.91.038c.453.037.714.107.912.207c.423.216.767.56.983.984c.1.197.17.458.207.912c.037.462.038 1.057.038 1.909V9a.75.75 0 0 0 1.5 0v-.232c0-.813 0-1.469-.043-2c-.045-.546-.14-1.026-.366-1.47a3.75 3.75 0 0 0-1.639-1.64c-.444-.226-.924-.32-1.47-.365c-.531-.043-1.187-.043-2-.043" />
+    <Path fill={color} d="M12.47 8.47a.75.75 0 1 1 1.06 1.06l-1.72 1.72H20a.75.75 0 0 1 0 1.5h-8.19l1.72 1.72a.75.75 0 1 1-1.06 1.06l-3-3a.75.75 0 0 1 0-1.06z" />
   </Svg>
 );
 
 const NotificationIcon = ({ color = C.text }: { color?: string }) => (
   <Svg width={24} height={24} viewBox="0 0 24 24">
     <Path d="M0 0h24v24H0z" fill="none" />
-    <Path
-      fill={color}
-      fillRule="evenodd"
-      d="M12 1a2 2 0 0 0-1.98 2.284A7 7 0 0 0 5 10v8H4a1 1 0 1 0 0 2h16a1 1 0 1 0 0-2h-1v-8a7 7 0 0 0-5.02-6.716Q14 3.144 14 3a2 2 0 0 0-2-2m2 21a1 1 0 0 1-1 1h-2a1 1 0 1 1 0-2h2a1 1 0 0 1 1 1"
-      clipRule="evenodd"
-    />
+    <Path fill={color} fillRule="evenodd" d="M12 1a2 2 0 0 0-1.98 2.284A7 7 0 0 0 5 10v8H4a1 1 0 1 0 0 2h16a1 1 0 1 0 0-2h-1v-8a7 7 0 0 0-5.02-6.716Q14 3.144 14 3a2 2 0 0 0-2-2m2 21a1 1 0 0 1-1 1h-2a1 1 0 1 1 0-2h2a1 1 0 0 1 1 1" clipRule="evenodd" />
   </Svg>
 );
 
 const ProfileIcon = ({ color = C.text }: { color?: string }) => (
   <Svg width={24} height={24} viewBox="0 0 24 24">
     <Path d="M0 0h24v24H0z" fill="none" />
-    <Path
-      fill={color}
-      fillRule="evenodd"
-      d="M8 7a4 4 0 1 1 8 0a4 4 0 0 1-8 0m0 6a5 5 0 0 0-5 5a3 3 0 0 0 3 3h12a3 3 0 0 0 3-3a5 5 0 0 0-5-5z"
-      clipRule="evenodd"
-    />
+    <Path fill={color} fillRule="evenodd" d="M8 7a4 4 0 1 1 8 0a4 4 0 0 1-8 0m0 6a5 5 0 0 0-5 5a3 3 0 0 0 3 3h12a3 3 0 0 0 3-3a5 5 0 0 0-5-5z" clipRule="evenodd" />
   </Svg>
 );
 
-// ── Card image dimensions ─────────────────────────────────────────────────────
+// ── Card dimensions ───────────────────────────────────────────────────────────
 const CARD_IMG_W = width * 0.32;
 const CARD_IMG_H = CARD_IMG_W * 1.18;
 
@@ -246,18 +225,12 @@ interface BlogScreenProps { navigation?: any; }
 export default function BlogScreen({ navigation }: BlogScreenProps) {
   const { logout } = useAuth();
 
-  // ── Carousel state (same pattern as HomeScreen) ───────────────────────────
   const currentIndexRef = useRef(START_INDEX);
   const flatListRef     = useRef<FlatList>(null);
   const [signingOut, setSigningOut] = useState(false);
-
-  const [search,    setSearch]    = useState('');
-  const [activeTab, setActiveTab] = useState(0);
-  const [expanded,  setExpanded]  = useState<Record<string, boolean>>({});
-
-  // The "featured brief card" below the carousel tracks which real post is
-  // visible. We derive this from the carousel index.
-  const [visibleRealIndex, setVisibleRealIndex] = useState(START_INDEX % REAL_COUNT);
+  const [search,     setSearch]     = useState('');
+  const [activeTab,  setActiveTab]  = useState(0);
+  const [expanded,   setExpanded]   = useState<Record<string, boolean>>({});
 
   // ── Auto-advance: only forward, never flashes ─────────────────────────────
   useEffect(() => {
@@ -265,7 +238,6 @@ export default function BlogScreen({ navigation }: BlogScreenProps) {
       const next = currentIndexRef.current + 1;
       currentIndexRef.current = next;
       flatListRef.current?.scrollToIndex({ index: next, animated: true });
-      setVisibleRealIndex(next % REAL_COUNT);
     }, 4000);
     return () => clearInterval(timer);
   }, []);
@@ -291,20 +263,19 @@ export default function BlogScreen({ navigation }: BlogScreenProps) {
   };
 
   const handleProfilePress = () => navigation?.navigate?.('Dashboard');
+
   const toggleExpand = (key: string) =>
     setExpanded(prev => ({ ...prev, [key]: !prev[key] }));
 
-  const filteredOthers = MOCK_POSTS.slice(3).filter(p => {
-    const q   = search.toLowerCase();
-    const cat = CATEGORIES[activeTab].label;
+  const filteredPosts = MOCK_POSTS.filter(p => {
+    const q          = search.toLowerCase();
+    const cat        = CATEGORIES[activeTab].label;
     const matchSearch = !q || p.title.toLowerCase().includes(q) || p.description.toLowerCase().includes(q);
     const matchCat    = cat === 'All' || p.category === cat;
     return matchSearch && matchCat;
   });
 
-  const featuredPost = MOCK_POSTS[visibleRealIndex] ?? MOCK_POSTS[0];
-
-  // ── Carousel slide — exact same JSX as the original renderHeroSlide ───────
+  // ── Carousel slide — identical JSX to HomeScreen's renderHeroSlide ────────
   const renderCarouselSlide = ({ item }: { item: typeof MOCK_POSTS[0] }) => (
     <TouchableOpacity
       style={h.slide}
@@ -338,9 +309,7 @@ export default function BlogScreen({ navigation }: BlogScreenProps) {
     const isExp   = !!expanded[descKey];
     const SHORT   = 90;
     const isLong  = item.description.length > SHORT;
-    const display = isExp || !isLong
-      ? item.description
-      : item.description.slice(0, SHORT);
+    const display = isExp || !isLong ? item.description : item.description.slice(0, SHORT);
 
     return (
       <TouchableOpacity
@@ -368,8 +337,7 @@ export default function BlogScreen({ navigation }: BlogScreenProps) {
             {display}
             {isLong && !isExp && (
               <Text onPress={() => toggleExpand(descKey)}>
-                {'  '}
-                <Text style={bc.readMoreLink}>Read More</Text>
+                {'  '}<Text style={bc.readMoreLink}>Read More</Text>
               </Text>
             )}
           </Text>
@@ -409,35 +377,23 @@ export default function BlogScreen({ navigation }: BlogScreenProps) {
     );
   };
 
-  // ── Main ──────────────────────────────────────────────────────────────────
+  // ── Render ────────────────────────────────────────────────────────────────
   return (
     <View style={s.root}>
 
-      {/* ══ TOP BAR — back arrow + title only (icons moved to hero overlay) ═ */}
-      <SafeAreaView style={s.topBar}>
-        <TouchableOpacity style={s.iconBtn} onPress={() => navigation?.goBack?.()} activeOpacity={0.8}>
-          <Ionicons name="arrow-back" size={20} color={C.text} />
-        </TouchableOpacity>
-        <Text style={s.topTitle}>Our Blog</Text>
-        {/* Empty spacer keeps the title visually centred */}
-        <View style={s.iconBtn} />
-      </SafeAreaView>
-
       <FlatList
-        data={filteredOthers}
+        data={filteredPosts}
         keyExtractor={item => item.id}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: 48 }}
         ListHeaderComponent={(
           <>
             {/* ══ HERO — flash-free infinite carousel ═══════════════════════
-                Matches HomeScreen exactly:
-                  • SafeAreaView bg = C.bg
-                  • heroSlide paddingTop = 56
-                  • image height = 396
-                  • SignOut (left) | Notification + Profile→Dashboard (right)
-                    overlaid absolutely at top of the slide area
-            ═══════════════════════════════════════════════════════════════ */}
+                • SafeAreaView bg = C.bg  (same as HomeScreen)
+                • slide paddingTop = 56, image height = 396 (same as HomeScreen)
+                • Overlay: SignOut left | Notification + Profile right
+                  — absolutely positioned, same row/padding as HomeScreen
+            ══════════════════════════════════════════════════════════════ */}
             <SafeAreaView style={s.heroSafeArea}>
               <View>
                 <FlatList
@@ -456,20 +412,18 @@ export default function BlogScreen({ navigation }: BlogScreenProps) {
                   windowSize={3}
                   removeClippedSubviews
                   renderItem={renderCarouselSlide}
-                  // Update the brief card below when user manually swipes
                   onMomentumScrollEnd={e => {
                     const idx = Math.round(e.nativeEvent.contentOffset.x / width);
                     currentIndexRef.current = idx;
-                    setVisibleRealIndex(idx % REAL_COUNT);
                   }}
                 />
 
-                {/* ── Overlay: SignOut (left) │ Notification + Profile (right) ── */}
+                {/* ── Same overlay as HomeScreen ── */}
                 <View style={s.heroOverlay}>
                   <View style={s.heroOverlayRow}>
 
                     <TouchableOpacity
-                      style={s.overlayIconBtn}
+                      style={s.iconBtn}
                       onPress={handleSignOut}
                       activeOpacity={0.7}
                       disabled={signingOut}
@@ -482,7 +436,7 @@ export default function BlogScreen({ navigation }: BlogScreenProps) {
 
                     <View style={s.rightIconsRow}>
                       <TouchableOpacity
-                        style={s.overlayIconBtn}
+                        style={s.iconBtn}
                         onPress={() => navigation?.navigate?.('Notifications')}
                         activeOpacity={0.7}
                       >
@@ -490,7 +444,7 @@ export default function BlogScreen({ navigation }: BlogScreenProps) {
                       </TouchableOpacity>
 
                       <TouchableOpacity
-                        style={s.overlayIconBtn}
+                        style={s.iconBtn}
                         onPress={handleProfilePress}
                         activeOpacity={0.7}
                       >
@@ -502,69 +456,6 @@ export default function BlogScreen({ navigation }: BlogScreenProps) {
                 </View>
               </View>
             </SafeAreaView>
-
-            {/* ══ FEATURED BRIEF CARD — tracks current carousel slide ═══════ */}
-            <View style={s.briefCard}>
-              <View style={s.catTagRow}>
-                <MaterialIcons name="grid-view" size={13} color={C.muted} />
-                <Text style={s.catTagTxt}>{featuredPost.category}</Text>
-                <View style={s.catTagLine} />
-              </View>
-
-              <Text style={s.briefTitle}>{featuredPost.title}</Text>
-
-              {(() => {
-                const key    = 'hero_' + featuredPost.id;
-                const isExp  = !!expanded[key];
-                const SHORT  = 130;
-                const desc   = featuredPost.description;
-                const isLong = desc.length > SHORT;
-                return (
-                  <Text style={s.briefDesc}>
-                    {isExp || !isLong ? desc : desc.slice(0, SHORT)}
-                    {isLong && !isExp && (
-                      <Text onPress={() => toggleExpand(key)}>
-                        {'  '}
-                        <Text style={s.link}>Read More</Text>
-                      </Text>
-                    )}
-                  </Text>
-                );
-              })()}
-
-              {featuredPost.subheadings?.slice(0, 2).map((sub, si) => (
-                <View key={si} style={s.tocRow}>
-                  <View style={s.tocBullet} />
-                  <View style={{ flex: 1 }}>
-                    <Text style={s.tocTitle}>{sub.title}</Text>
-                    <Text style={s.tocDesc} numberOfLines={2}>{sub.description}</Text>
-                  </View>
-                </View>
-              ))}
-
-              <TouchableOpacity
-                style={s.briefCta}
-                onPress={() => navigation?.navigate?.('BlogPost', { post: featuredPost })}
-                activeOpacity={0.88}
-              >
-                <Text style={s.briefCtaTxt}>CONTINUE READING</Text>
-                <Ionicons name="arrow-forward" size={14} color={C.white} />
-              </TouchableOpacity>
-
-              <View style={s.heroShareRow}>
-                <Text style={s.heroShareLabel}>Share:</Text>
-                {SHARE_PLATFORMS.map(p => (
-                  <TouchableOpacity
-                    key={p.key}
-                    style={s.heroShareBtn}
-                    onPress={() => sharePost(p.key, featuredPost)}
-                    activeOpacity={0.8}
-                  >
-                    <Text style={s.heroShareTxt}>{p.label}</Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            </View>
 
             {/* ══ SEARCH + CATEGORY TABS ════════════════════════════════════ */}
             <View style={s.searchOuter}>
@@ -614,13 +505,13 @@ export default function BlogScreen({ navigation }: BlogScreenProps) {
               </ScrollView>
             </View>
 
-            {/* ══ OTHER ARTICLES HEADER ═════════════════════════════════════ */}
+            {/* ══ ARTICLES HEADER ═══════════════════════════════════════════ */}
             <View style={s.recHeader}>
-              <Text style={s.recTitle}>Other Articles</Text>
-              <Text style={s.recCount}>{filteredOthers.length} posts</Text>
+              <Text style={s.recTitle}>Articles</Text>
+              <Text style={s.recCount}>{filteredPosts.length} posts</Text>
             </View>
 
-            {filteredOthers.length === 0 && (
+            {filteredPosts.length === 0 && (
               <View style={s.empty}>
                 <Text style={{ fontSize: 38 }}>🔍</Text>
                 <Text style={s.emptyTitle}>No posts found</Text>
@@ -642,24 +533,24 @@ export default function BlogScreen({ navigation }: BlogScreenProps) {
   );
 }
 
-// ── Hero slide styles — same dimensions as HomeScreen ─────────────────────────
+// ── Hero slide styles — pixel-identical to HomeScreen ─────────────────────────
 const h = StyleSheet.create({
   slide: {
     width,
     overflow: 'hidden',
     backgroundColor: C.bg,
-    paddingTop: 56,       // ← matches HomeScreen heroSlide.paddingTop
+    paddingTop: 56,       // matches HomeScreen heroSlide.paddingTop
   },
-  img: { width, height: 396 },   // ← matches HomeScreen heroImage dimensions
+  img: { width, height: 396 },  // matches HomeScreen heroImage
 
   grad: {
     position: 'absolute', bottom: 0, left: 0, right: 0,
     backgroundColor: 'rgba(17,24,39,0.76)', padding: 16,
   },
-  authorRow:  { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 10 },
-  avatar:     { width: 34, height: 34, borderRadius: 17, borderWidth: 2, borderColor: C.white },
-  authorName: { color: C.white, fontSize: 12, fontWeight: '700' },
-  authorDate: { color: 'rgba(255,255,255,0.65)', fontSize: 10, marginTop: 1 },
+  authorRow:   { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 10 },
+  avatar:      { width: 34, height: 34, borderRadius: 17, borderWidth: 2, borderColor: C.white },
+  authorName:  { color: C.white, fontSize: 12, fontWeight: '700' },
+  authorDate:  { color: 'rgba(255,255,255,0.65)', fontSize: 10, marginTop: 1 },
   catBadge: {
     marginLeft: 'auto',
     backgroundColor: C.primary, borderRadius: 20,
@@ -703,14 +594,13 @@ const bc = StyleSheet.create({
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 3,
     backgroundColor: 'rgba(0,0,0,0.5)', paddingVertical: 4,
   },
-  timeTxt: { color: C.white, fontSize: 9, fontWeight: '700' },
-
-  content: { flex: 1, padding: 11, justifyContent: 'space-between' },
+  timeTxt:      { color: C.white, fontSize: 9, fontWeight: '700' },
+  content:      { flex: 1, padding: 11, justifyContent: 'space-between' },
   catBadge: {
     alignSelf: 'flex-start', backgroundColor: '#eff6ff',
     borderRadius: 20, paddingHorizontal: 8, paddingVertical: 3, marginBottom: 5,
   },
-  catBadgeTxt: { color: C.primary, fontSize: 8, fontWeight: '800' },
+  catBadgeTxt:  { color: C.primary, fontSize: 8, fontWeight: '800' },
   title:        { fontSize: 12, fontWeight: '800', color: C.text, lineHeight: 17, marginBottom: 5 },
   desc:         { fontSize: 10, color: C.sub, lineHeight: 15, marginBottom: 5, flexShrink: 1 },
   readMoreLink: { color: C.primary, fontWeight: '700', fontSize: 10 },
@@ -732,71 +622,22 @@ const bc = StyleSheet.create({
   },
 });
 
-// ── Root / layout styles ──────────────────────────────────────────────────────
+// ── Root styles ───────────────────────────────────────────────────────────────
 const s = StyleSheet.create({
   root: { flex: 1, backgroundColor: C.bg },
 
-  // ── Top bar — back arrow + centred title, no extra icons ─────────────────
-  topBar: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    paddingHorizontal: 16, paddingBottom: 10,
-    backgroundColor: C.white, borderBottomWidth: 1, borderBottomColor: C.border,
-  },
-  iconBtn:  { width: 38, height: 38, borderRadius: 19, backgroundColor: C.bg, justifyContent: 'center', alignItems: 'center' },
-  topTitle: { fontSize: 17, fontWeight: '700', color: C.text },
-
-  // ── Hero carousel — same SafeAreaView bg as HomeScreen ───────────────────
+  // ── Hero — same bg/sizing as HomeScreen ──────────────────────────────────
   heroSafeArea: { backgroundColor: C.bg },
 
-  // ── Overlay (identical to HomeScreen) ────────────────────────────────────
+  // ── Overlay row — copied exactly from HomeScreen styles ───────────────────
   heroOverlay:    { position: 'absolute', top: 0, left: 0, right: 0 },
   heroOverlayRow: {
     flexDirection: 'row', justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 16, paddingTop: 6,
   },
-  rightIconsRow:  { flexDirection: 'row', gap: 8 },
-  overlayIconBtn: { width: 40, height: 40, justifyContent: 'center', alignItems: 'center' },
-
-  // ── Featured brief card ───────────────────────────────────────────────────
-  briefCard: {
-    backgroundColor: C.white,
-    marginHorizontal: 16, marginTop: 16,
-    borderRadius: 20, padding: 16,
-    shadowColor: '#000', shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05, shadowRadius: 8, elevation: 2,
-    marginBottom: 6,
-  },
-  catTagRow:  { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 10 },
-  catTagTxt:  { fontSize: 11, color: C.muted, fontWeight: '600' },
-  catTagLine: { width: 24, height: 2, backgroundColor: C.red, borderRadius: 1, marginLeft: 4 },
-  briefTitle: { fontSize: 16, fontWeight: '800', color: C.primary, lineHeight: 22, marginBottom: 8 },
-  briefDesc:  { fontSize: 13, color: C.sub, lineHeight: 20, marginBottom: 12 },
-  link:       { color: C.primary, fontWeight: '700' },
-
-  tocRow:    { flexDirection: 'row', alignItems: 'flex-start', gap: 8, marginBottom: 8 },
-  tocBullet: { width: 6, height: 6, borderRadius: 3, backgroundColor: C.primary, marginTop: 5 },
-  tocTitle:  { fontSize: 12, fontWeight: '700', color: C.text, marginBottom: 2 },
-  tocDesc:   { fontSize: 11, color: C.sub, lineHeight: 16 },
-
-  briefCta: {
-    flexDirection: 'row', alignItems: 'center', gap: 7,
-    backgroundColor: C.primary, borderRadius: 50,
-    paddingVertical: 11, paddingHorizontal: 20,
-    alignSelf: 'flex-start', marginTop: 4, marginBottom: 12,
-    shadowColor: C.primary, shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.28, shadowRadius: 8, elevation: 4,
-  },
-  briefCtaTxt: { color: C.white, fontSize: 11, fontWeight: '800', letterSpacing: 0.5 },
-
-  heroShareRow:   { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  heroShareLabel: { fontSize: 12, color: C.muted, fontWeight: '600' },
-  heroShareBtn: {
-    width: 30, height: 30, borderRadius: 15,
-    borderWidth: 1.5, borderColor: C.primary,
-    justifyContent: 'center', alignItems: 'center',
-  },
-  heroShareTxt: { color: C.primary, fontSize: 10, fontWeight: '800' },
+  rightIconsRow: { flexDirection: 'row', gap: 8 },
+  iconBtn:       { width: 40, height: 40, justifyContent: 'center', alignItems: 'center' },
 
   // ── Search ────────────────────────────────────────────────────────────────
   searchOuter: { paddingHorizontal: 16, paddingTop: 16, paddingBottom: 4 },
@@ -826,7 +667,7 @@ const s = StyleSheet.create({
   tabTxt:   { fontSize: 11, fontWeight: '600', color: C.sub },
   tabTxtOn: { color: C.white },
 
-  // ── Article list header ───────────────────────────────────────────────────
+  // ── Articles header ───────────────────────────────────────────────────────
   recHeader: {
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
     paddingHorizontal: 16, paddingTop: 18, paddingBottom: 12,
