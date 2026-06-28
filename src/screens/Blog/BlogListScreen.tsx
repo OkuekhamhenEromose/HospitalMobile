@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
 import {
   View,
   Text,
@@ -12,9 +12,13 @@ import {
   Linking,
   NativeSyntheticEvent,
   NativeScrollEvent,
+  ActivityIndicator,
+  Alert,
 } from 'react-native';
 import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import Svg, { Path } from 'react-native-svg';
+import { useAuth } from '../../contexts/AuthContext';
 
 const { width } = Dimensions.get('window');
 
@@ -142,7 +146,7 @@ const MOCK_POSTS = [
     image: DOCTOR_IMG,
     slug: 'heart-health-cardiovascular-risk',
     subheadings: [
-      { title: 'Know your numbers',  description: 'Track blood pressure, cholesterol, blood sugar, and BMI regularly.' },
+      { title: 'Know your numbers',    description: 'Track blood pressure, cholesterol, blood sugar, and BMI regularly.' },
       { title: 'The role of exercise', description: '150 minutes of moderate aerobic activity per week is the minimum recommended dose.' },
     ],
   },
@@ -175,30 +179,122 @@ function sharePost(platform: string, post: typeof MOCK_POSTS[0]) {
   if (urls[platform]) Linking.openURL(urls[platform]);
 }
 
-const HERO_H   = 260;
-const FEATURED = MOCK_POSTS.slice(0, 3);
-const OTHERS   = MOCK_POSTS.slice(3);
+// ── Infinite-loop carousel — same flash-free strategy as HomeScreen ───────────
+//
+// We repeat the MOCK_POSTS array 100 times in each direction (200× total).
+// Starting at the midpoint means the user can never swipe to either end
+// in a normal session. The auto-timer only ever increments, so there is
+// no silent backward jump and therefore no flash.
 
-// ── Card image dimensions (image LEFT, content RIGHT) ─────────────────────────
+const REAL_POSTS  = MOCK_POSTS;
+const REAL_COUNT  = REAL_POSTS.length;
+const REPEAT      = 100;
+const TOTAL       = REAL_COUNT * REPEAT * 2;          // 1400 slots
+const START_INDEX = Math.floor(TOTAL / 2);            // 700 — always a multiple of REAL_COUNT
+
+const CAROUSEL_DATA = Array.from(
+  { length: TOTAL },
+  (_, i) => REAL_POSTS[i % REAL_COUNT],
+);
+
+// ── SVG icons (same as HomeScreen) ───────────────────────────────────────────
+const SignOutIcon = ({ color = C.text }: { color?: string }) => (
+  <Svg width={24} height={24} viewBox="0 0 24 24">
+    <Path d="M0 0h24v24H0z" fill="none" />
+    <Path
+      fill={color}
+      d="M12.232 3.25H9.768c-.813 0-1.469 0-2 .043c-.546.045-1.026.14-1.47.366a3.75 3.75 0 0 0-1.64 1.639c-.226.444-.32.924-.365 1.47c-.043.531-.043 1.187-.043 2v6.464c0 .813 0 1.469.043 2c.045.546.14 1.026.366 1.47a3.75 3.75 0 0 0 1.639 1.64c.444.226.924.32 1.47.365c.531.043 1.187.043 2 .043h2.464c.813 0 1.469 0 2-.043c.546-.045 1.026-.14 1.47-.366a3.75 3.75 0 0 0 1.64-1.639c.226-.444.32-.924.365-1.47c.043-.531.043-1.187.043-2V15a.75.75 0 0 0-1.5 0v.2c0 .852 0 1.447-.038 1.91c-.038.453-.107.714-.207.912c-.216.423-.56.767-.983.983c-.198.1-.459.17-.913.207c-.462.037-1.056.038-1.909.038H9.8c-.852 0-1.447 0-1.91-.038c-.453-.038-.714-.107-.911-.207a2.25 2.25 0 0 1-.984-.983c-.1-.198-.17-.459-.207-.913c-.037-.462-.038-1.057-.038-1.909V8.8c0-.852 0-1.447.038-1.91c.037-.453.107-.714.207-.911a2.25 2.25 0 0 1 .984-.984c.197-.1.458-.17.912-.207c.462-.037 1.057-.038 1.909-.038h2.4c.853 0 1.447 0 1.91.038c.453.037.714.107.912.207c.423.216.767.56.983.984c.1.197.17.458.207.912c.037.462.038 1.057.038 1.909V9a.75.75 0 0 0 1.5 0v-.232c0-.813 0-1.469-.043-2c-.045-.546-.14-1.026-.366-1.47a3.75 3.75 0 0 0-1.639-1.64c-.444-.226-.924-.32-1.47-.365c-.531-.043-1.187-.043-2-.043"
+    />
+    <Path
+      fill={color}
+      d="M12.47 8.47a.75.75 0 1 1 1.06 1.06l-1.72 1.72H20a.75.75 0 0 1 0 1.5h-8.19l1.72 1.72a.75.75 0 1 1-1.06 1.06l-3-3a.75.75 0 0 1 0-1.06z"
+    />
+  </Svg>
+);
+
+const NotificationIcon = ({ color = C.text }: { color?: string }) => (
+  <Svg width={24} height={24} viewBox="0 0 24 24">
+    <Path d="M0 0h24v24H0z" fill="none" />
+    <Path
+      fill={color}
+      fillRule="evenodd"
+      d="M12 1a2 2 0 0 0-1.98 2.284A7 7 0 0 0 5 10v8H4a1 1 0 1 0 0 2h16a1 1 0 1 0 0-2h-1v-8a7 7 0 0 0-5.02-6.716Q14 3.144 14 3a2 2 0 0 0-2-2m2 21a1 1 0 0 1-1 1h-2a1 1 0 1 1 0-2h2a1 1 0 0 1 1 1"
+      clipRule="evenodd"
+    />
+  </Svg>
+);
+
+const ProfileIcon = ({ color = C.text }: { color?: string }) => (
+  <Svg width={24} height={24} viewBox="0 0 24 24">
+    <Path d="M0 0h24v24H0z" fill="none" />
+    <Path
+      fill={color}
+      fillRule="evenodd"
+      d="M8 7a4 4 0 1 1 8 0a4 4 0 0 1-8 0m0 6a5 5 0 0 0-5 5a3 3 0 0 0 3 3h12a3 3 0 0 0 3-3a5 5 0 0 0-5-5z"
+      clipRule="evenodd"
+    />
+  </Svg>
+);
+
+// ── Card image dimensions ─────────────────────────────────────────────────────
 const CARD_IMG_W = width * 0.32;
-const CARD_IMG_H = CARD_IMG_W * 1.18;   // slightly taller than wide
+const CARD_IMG_H = CARD_IMG_W * 1.18;
 
 // ─────────────────────────────────────────────────────────────────────────────
 interface BlogScreenProps { navigation?: any; }
 
 export default function BlogScreen({ navigation }: BlogScreenProps) {
+  const { logout } = useAuth();
+
+  // ── Carousel state (same pattern as HomeScreen) ───────────────────────────
+  const currentIndexRef = useRef(START_INDEX);
+  const flatListRef     = useRef<FlatList>(null);
+  const [signingOut, setSigningOut] = useState(false);
+
   const [search,    setSearch]    = useState('');
   const [activeTab, setActiveTab] = useState(0);
-  const [heroIndex, setHeroIndex] = useState(0);
   const [expanded,  setExpanded]  = useState<Record<string, boolean>>({});
 
-  const onHeroScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) =>
-    setHeroIndex(Math.round(e.nativeEvent.contentOffset.x / width));
+  // The "featured brief card" below the carousel tracks which real post is
+  // visible. We derive this from the carousel index.
+  const [visibleRealIndex, setVisibleRealIndex] = useState(START_INDEX % REAL_COUNT);
 
+  // ── Auto-advance: only forward, never flashes ─────────────────────────────
+  useEffect(() => {
+    const timer = setInterval(() => {
+      const next = currentIndexRef.current + 1;
+      currentIndexRef.current = next;
+      flatListRef.current?.scrollToIndex({ index: next, animated: true });
+      setVisibleRealIndex(next % REAL_COUNT);
+    }, 4000);
+    return () => clearInterval(timer);
+  }, []);
+
+  // ── Sign-out ──────────────────────────────────────────────────────────────
+  const handleSignOut = () => {
+    Alert.alert(
+      'Sign Out',
+      'Are you sure you want to sign out?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Sign Out',
+          style: 'destructive',
+          onPress: async () => {
+            setSigningOut(true);
+            try   { await logout(); }
+            catch { setSigningOut(false); }
+          },
+        },
+      ],
+    );
+  };
+
+  const handleProfilePress = () => navigation?.navigate?.('Dashboard');
   const toggleExpand = (key: string) =>
     setExpanded(prev => ({ ...prev, [key]: !prev[key] }));
 
-  const filteredOthers = OTHERS.filter(p => {
+  const filteredOthers = MOCK_POSTS.slice(3).filter(p => {
     const q   = search.toLowerCase();
     const cat = CATEGORIES[activeTab].label;
     const matchSearch = !q || p.title.toLowerCase().includes(q) || p.description.toLowerCase().includes(q);
@@ -206,10 +302,10 @@ export default function BlogScreen({ navigation }: BlogScreenProps) {
     return matchSearch && matchCat;
   });
 
-  const featuredPost = FEATURED[heroIndex] ?? FEATURED[0];
+  const featuredPost = MOCK_POSTS[visibleRealIndex] ?? MOCK_POSTS[0];
 
-  // ── Hero slide ──────────────────────────────────────────────────────────────
-  const renderHeroSlide = ({ item }: { item: typeof MOCK_POSTS[0] }) => (
+  // ── Carousel slide — exact same JSX as the original renderHeroSlide ───────
+  const renderCarouselSlide = ({ item }: { item: typeof MOCK_POSTS[0] }) => (
     <TouchableOpacity
       style={h.slide}
       activeOpacity={0.95}
@@ -236,7 +332,7 @@ export default function BlogScreen({ navigation }: BlogScreenProps) {
     </TouchableOpacity>
   );
 
-  // ── Blog list card — image LEFT, content RIGHT ──────────────────────────────
+  // ── Blog list card ────────────────────────────────────────────────────────
   const renderCard = ({ item }: { item: typeof MOCK_POSTS[0] }) => {
     const descKey = 'card_' + item.id;
     const isExp   = !!expanded[descKey];
@@ -252,33 +348,22 @@ export default function BlogScreen({ navigation }: BlogScreenProps) {
         onPress={() => navigation?.navigate?.('BlogPost', { post: item })}
         activeOpacity={0.93}
       >
-        {/* ── LEFT — image ── */}
         <View style={bc.imgWrap}>
           <Image source={item.image} style={bc.img} resizeMode="cover" />
-
-          {/* Bookmark top-right corner of image */}
           <TouchableOpacity style={bc.bookmarkBtn} activeOpacity={0.8}>
             <Ionicons name="bookmark-outline" size={13} color={C.white} />
           </TouchableOpacity>
-
-          {/* Read-time badge pinned to bottom of image */}
           <View style={bc.timeBadge}>
             <Ionicons name="time-outline" size={9} color={C.white} />
             <Text style={bc.timeTxt}>{item.readTime}</Text>
           </View>
         </View>
 
-        {/* ── RIGHT — content ── */}
         <View style={bc.content}>
-          {/* Category pill */}
           <View style={bc.catBadge}>
             <Text style={bc.catBadgeTxt}>{item.category}</Text>
           </View>
-
-          {/* Title */}
           <Text style={bc.title} numberOfLines={2}>{item.title}</Text>
-
-          {/* Description with inline Read More */}
           <Text style={bc.desc}>
             {display}
             {isLong && !isExp && (
@@ -293,14 +378,10 @@ export default function BlogScreen({ navigation }: BlogScreenProps) {
               <Text style={bc.readMoreLink}>Show less</Text>
             </TouchableOpacity>
           )}
-
-          {/* Date row */}
           <View style={bc.metaRow}>
             <Ionicons name="calendar-outline" size={10} color={C.muted} />
             <Text style={bc.metaTxt}>{item.date}</Text>
           </View>
-
-          {/* Footer: share buttons */}
           <View style={bc.footer}>
             <Text style={bc.shareLabel}>Share:</Text>
             <View style={bc.shareRow}>
@@ -315,7 +396,6 @@ export default function BlogScreen({ navigation }: BlogScreenProps) {
                 </TouchableOpacity>
               ))}
             </View>
-            {/* Continue reading arrow */}
             <TouchableOpacity
               style={bc.arrowBtn}
               onPress={() => navigation?.navigate?.('BlogPost', { post: item })}
@@ -329,19 +409,18 @@ export default function BlogScreen({ navigation }: BlogScreenProps) {
     );
   };
 
-  // ── Main ────────────────────────────────────────────────────────────────────
+  // ── Main ──────────────────────────────────────────────────────────────────
   return (
     <View style={s.root}>
 
-      {/* Top bar */}
+      {/* ══ TOP BAR — back arrow + title only (icons moved to hero overlay) ═ */}
       <SafeAreaView style={s.topBar}>
         <TouchableOpacity style={s.iconBtn} onPress={() => navigation?.goBack?.()} activeOpacity={0.8}>
           <Ionicons name="arrow-back" size={20} color={C.text} />
         </TouchableOpacity>
         <Text style={s.topTitle}>Our Blog</Text>
-        <TouchableOpacity style={s.iconBtn} activeOpacity={0.8}>
-          <Ionicons name="notifications-outline" size={20} color={C.text} />
-        </TouchableOpacity>
+        {/* Empty spacer keeps the title visually centred */}
+        <View style={s.iconBtn} />
       </SafeAreaView>
 
       <FlatList
@@ -351,28 +430,80 @@ export default function BlogScreen({ navigation }: BlogScreenProps) {
         contentContainerStyle={{ paddingBottom: 48 }}
         ListHeaderComponent={(
           <>
-            {/* ══════════════════════════════════════════
-                SECTION 1 — Featured hero carousel
-            ══════════════════════════════════════════ */}
-            <View style={s.heroWrap}>
-              <FlatList
-                data={FEATURED}
-                keyExtractor={item => item.id}
-                horizontal
-                pagingEnabled
-                showsHorizontalScrollIndicator={false}
-                onScroll={onHeroScroll}
-                scrollEventThrottle={16}
-                renderItem={renderHeroSlide}
-              />
-              <View style={s.dotsRow}>
-                {FEATURED.map((_, i) => (
-                  <View key={i} style={[s.dot, i === heroIndex ? s.dotOn : s.dotOff]} />
-                ))}
-              </View>
-            </View>
+            {/* ══ HERO — flash-free infinite carousel ═══════════════════════
+                Matches HomeScreen exactly:
+                  • SafeAreaView bg = C.bg
+                  • heroSlide paddingTop = 56
+                  • image height = 396
+                  • SignOut (left) | Notification + Profile→Dashboard (right)
+                    overlaid absolutely at top of the slide area
+            ═══════════════════════════════════════════════════════════════ */}
+            <SafeAreaView style={s.heroSafeArea}>
+              <View>
+                <FlatList
+                  ref={flatListRef}
+                  data={CAROUSEL_DATA}
+                  keyExtractor={(_, i) => i.toString()}
+                  horizontal
+                  pagingEnabled
+                  showsHorizontalScrollIndicator={false}
+                  initialScrollIndex={START_INDEX}
+                  getItemLayout={(_, index) => ({
+                    length: width,
+                    offset: width * index,
+                    index,
+                  })}
+                  windowSize={3}
+                  removeClippedSubviews
+                  renderItem={renderCarouselSlide}
+                  // Update the brief card below when user manually swipes
+                  onMomentumScrollEnd={e => {
+                    const idx = Math.round(e.nativeEvent.contentOffset.x / width);
+                    currentIndexRef.current = idx;
+                    setVisibleRealIndex(idx % REAL_COUNT);
+                  }}
+                />
 
-            {/* Featured brief card */}
+                {/* ── Overlay: SignOut (left) │ Notification + Profile (right) ── */}
+                <View style={s.heroOverlay}>
+                  <View style={s.heroOverlayRow}>
+
+                    <TouchableOpacity
+                      style={s.overlayIconBtn}
+                      onPress={handleSignOut}
+                      activeOpacity={0.7}
+                      disabled={signingOut}
+                    >
+                      {signingOut
+                        ? <ActivityIndicator size="small" color={C.primary} />
+                        : <SignOutIcon color={C.text} />
+                      }
+                    </TouchableOpacity>
+
+                    <View style={s.rightIconsRow}>
+                      <TouchableOpacity
+                        style={s.overlayIconBtn}
+                        onPress={() => navigation?.navigate?.('Notifications')}
+                        activeOpacity={0.7}
+                      >
+                        <NotificationIcon color={C.text} />
+                      </TouchableOpacity>
+
+                      <TouchableOpacity
+                        style={s.overlayIconBtn}
+                        onPress={handleProfilePress}
+                        activeOpacity={0.7}
+                      >
+                        <ProfileIcon color={C.primary} />
+                      </TouchableOpacity>
+                    </View>
+
+                  </View>
+                </View>
+              </View>
+            </SafeAreaView>
+
+            {/* ══ FEATURED BRIEF CARD — tracks current carousel slide ═══════ */}
             <View style={s.briefCard}>
               <View style={s.catTagRow}>
                 <MaterialIcons name="grid-view" size={13} color={C.muted} />
@@ -435,9 +566,7 @@ export default function BlogScreen({ navigation }: BlogScreenProps) {
               </View>
             </View>
 
-            {/* ══════════════════════════════════════════
-                SECTION 2 — Search + Category tabs
-            ══════════════════════════════════════════ */}
+            {/* ══ SEARCH + CATEGORY TABS ════════════════════════════════════ */}
             <View style={s.searchOuter}>
               <View style={s.searchBar}>
                 <Ionicons name="search-outline" size={17} color={C.muted} />
@@ -485,9 +614,7 @@ export default function BlogScreen({ navigation }: BlogScreenProps) {
               </ScrollView>
             </View>
 
-            {/* ══════════════════════════════════════════
-                SECTION 3 header
-            ══════════════════════════════════════════ */}
+            {/* ══ OTHER ARTICLES HEADER ═════════════════════════════════════ */}
             <View style={s.recHeader}>
               <Text style={s.recTitle}>Other Articles</Text>
               <Text style={s.recCount}>{filteredOthers.length} posts</Text>
@@ -515,10 +642,16 @@ export default function BlogScreen({ navigation }: BlogScreenProps) {
   );
 }
 
-// ── Hero slide styles ─────────────────────────────────────────────────────────
+// ── Hero slide styles — same dimensions as HomeScreen ─────────────────────────
 const h = StyleSheet.create({
-  slide:      { width, height: HERO_H, position: 'relative' },
-  img:        { width: '100%', height: '100%' },
+  slide: {
+    width,
+    overflow: 'hidden',
+    backgroundColor: C.bg,
+    paddingTop: 56,       // ← matches HomeScreen heroSlide.paddingTop
+  },
+  img: { width, height: 396 },   // ← matches HomeScreen heroImage dimensions
+
   grad: {
     position: 'absolute', bottom: 0, left: 0, right: 0,
     backgroundColor: 'rgba(17,24,39,0.76)', padding: 16,
@@ -543,10 +676,10 @@ const h = StyleSheet.create({
   timeTxt: { color: C.white, fontSize: 10, fontWeight: '600' },
 });
 
-// ── Blog card styles — image LEFT, content RIGHT ──────────────────────────────
+// ── Blog card styles ──────────────────────────────────────────────────────────
 const bc = StyleSheet.create({
   card: {
-    flexDirection: 'row',                   // ← horizontal layout
+    flexDirection: 'row',
     backgroundColor: C.white,
     marginHorizontal: 16,
     borderRadius: 18,
@@ -557,69 +690,41 @@ const bc = StyleSheet.create({
     shadowRadius: 8,
     elevation: 3,
   },
-
-  // ── LEFT — image ──────────────────────────────────────────────────────────
-  imgWrap: {
-    width: CARD_IMG_W,
-    height: CARD_IMG_H,
-    position: 'relative',
-  },
-  img: { width: '100%', height: '100%' },
-
+  imgWrap: { width: CARD_IMG_W, height: CARD_IMG_H, position: 'relative' },
+  img:     { width: '100%', height: '100%' },
   bookmarkBtn: {
     position: 'absolute', top: 8, right: 8,
     width: 24, height: 24, borderRadius: 12,
     backgroundColor: 'rgba(0,0,0,0.38)',
     justifyContent: 'center', alignItems: 'center',
   },
-
   timeBadge: {
     position: 'absolute', bottom: 0, left: 0, right: 0,
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 3,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    paddingVertical: 4,
+    backgroundColor: 'rgba(0,0,0,0.5)', paddingVertical: 4,
   },
   timeTxt: { color: C.white, fontSize: 9, fontWeight: '700' },
 
-  // ── RIGHT — content ───────────────────────────────────────────────────────
-  content: {
-    flex: 1,
-    padding: 11,
-    justifyContent: 'space-between',
-  },
-
+  content: { flex: 1, padding: 11, justifyContent: 'space-between' },
   catBadge: {
-    alignSelf: 'flex-start',
-    backgroundColor: '#eff6ff',
-    borderRadius: 20, paddingHorizontal: 8, paddingVertical: 3,
-    marginBottom: 5,
+    alignSelf: 'flex-start', backgroundColor: '#eff6ff',
+    borderRadius: 20, paddingHorizontal: 8, paddingVertical: 3, marginBottom: 5,
   },
   catBadgeTxt: { color: C.primary, fontSize: 8, fontWeight: '800' },
-
-  title: {
-    fontSize: 12,
-    fontWeight: '800',
-    color: C.text,
-    lineHeight: 17,
-    marginBottom: 5,
-  },
-
+  title:        { fontSize: 12, fontWeight: '800', color: C.text, lineHeight: 17, marginBottom: 5 },
   desc:         { fontSize: 10, color: C.sub, lineHeight: 15, marginBottom: 5, flexShrink: 1 },
   readMoreLink: { color: C.primary, fontWeight: '700', fontSize: 10 },
-
-  metaRow:  { flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: 7 },
-  metaTxt:  { fontSize: 10, color: C.muted },
-
-  footer:     { flexDirection: 'row', alignItems: 'center', gap: 5 },
-  shareLabel: { fontSize: 9, color: C.muted, fontWeight: '600' },
-  shareRow:   { flexDirection: 'row', gap: 4, flex: 1 },
+  metaRow:      { flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: 7 },
+  metaTxt:      { fontSize: 10, color: C.muted },
+  footer:       { flexDirection: 'row', alignItems: 'center', gap: 5 },
+  shareLabel:   { fontSize: 9, color: C.muted, fontWeight: '600' },
+  shareRow:     { flexDirection: 'row', gap: 4, flex: 1 },
   shareBtn: {
     width: 22, height: 22, borderRadius: 11,
     borderWidth: 1.2, borderColor: C.primary,
     justifyContent: 'center', alignItems: 'center',
   },
   shareTxt: { color: C.primary, fontSize: 8, fontWeight: '800' },
-
   arrowBtn: {
     width: 26, height: 26, borderRadius: 13,
     backgroundColor: C.primary,
@@ -627,20 +732,33 @@ const bc = StyleSheet.create({
   },
 });
 
-// ── Root styles ───────────────────────────────────────────────────────────────
+// ── Root / layout styles ──────────────────────────────────────────────────────
 const s = StyleSheet.create({
   root: { flex: 1, backgroundColor: C.bg },
 
-  topBar:   { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingBottom: 10, backgroundColor: C.white, borderBottomWidth: 1, borderBottomColor: C.border },
+  // ── Top bar — back arrow + centred title, no extra icons ─────────────────
+  topBar: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    paddingHorizontal: 16, paddingBottom: 10,
+    backgroundColor: C.white, borderBottomWidth: 1, borderBottomColor: C.border,
+  },
   iconBtn:  { width: 38, height: 38, borderRadius: 19, backgroundColor: C.bg, justifyContent: 'center', alignItems: 'center' },
   topTitle: { fontSize: 17, fontWeight: '700', color: C.text },
 
-  heroWrap: { backgroundColor: C.dark },
-  dotsRow:  { flexDirection: 'row', justifyContent: 'center', gap: 5, paddingVertical: 10, backgroundColor: C.dark },
-  dot:      { height: 6, borderRadius: 3 },
-  dotOn:    { width: 18, backgroundColor: C.white },
-  dotOff:   { width: 6,  backgroundColor: 'rgba(255,255,255,0.3)' },
+  // ── Hero carousel — same SafeAreaView bg as HomeScreen ───────────────────
+  heroSafeArea: { backgroundColor: C.bg },
 
+  // ── Overlay (identical to HomeScreen) ────────────────────────────────────
+  heroOverlay:    { position: 'absolute', top: 0, left: 0, right: 0 },
+  heroOverlayRow: {
+    flexDirection: 'row', justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 16, paddingTop: 6,
+  },
+  rightIconsRow:  { flexDirection: 'row', gap: 8 },
+  overlayIconBtn: { width: 40, height: 40, justifyContent: 'center', alignItems: 'center' },
+
+  // ── Featured brief card ───────────────────────────────────────────────────
   briefCard: {
     backgroundColor: C.white,
     marginHorizontal: 16, marginTop: 16,
@@ -680,6 +798,7 @@ const s = StyleSheet.create({
   },
   heroShareTxt: { color: C.primary, fontSize: 10, fontWeight: '800' },
 
+  // ── Search ────────────────────────────────────────────────────────────────
   searchOuter: { paddingHorizontal: 16, paddingTop: 16, paddingBottom: 4 },
   searchBar: {
     flexDirection: 'row', alignItems: 'center', gap: 10,
@@ -695,6 +814,7 @@ const s = StyleSheet.create({
     justifyContent: 'center', alignItems: 'center',
   },
 
+  // ── Category tabs ─────────────────────────────────────────────────────────
   tabsRow: { paddingRight: 4, gap: 8 },
   tab: {
     flexDirection: 'row', alignItems: 'center', gap: 5,
@@ -706,10 +826,15 @@ const s = StyleSheet.create({
   tabTxt:   { fontSize: 11, fontWeight: '600', color: C.sub },
   tabTxtOn: { color: C.white },
 
-  recHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 16, paddingTop: 18, paddingBottom: 12 },
+  // ── Article list header ───────────────────────────────────────────────────
+  recHeader: {
+    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
+    paddingHorizontal: 16, paddingTop: 18, paddingBottom: 12,
+  },
   recTitle:  { fontSize: 17, fontWeight: '800', color: C.text },
   recCount:  { fontSize: 12, color: C.muted, fontWeight: '500' },
 
+  // ── Empty state ───────────────────────────────────────────────────────────
   empty:       { alignItems: 'center', paddingVertical: 40, paddingHorizontal: 32 },
   emptyTitle:  { fontSize: 17, fontWeight: '700', color: C.text, marginTop: 10 },
   emptySub:    { fontSize: 13, color: C.muted, marginTop: 4, marginBottom: 16, textAlign: 'center' },
