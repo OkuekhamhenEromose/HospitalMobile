@@ -45,32 +45,16 @@ const C = {
 };
 
 // ── Infinite-loop carousel setup ──────────────────────────────────────────────
-//
-// Strategy: instead of ghost-clone wrapping (which causes the flash because
-// the silent jump races with the animation), we use a LARGE repeated array.
-// We duplicate the 3 real images enough times that the user can never swipe
-// to either end during a normal session (50 full cycles = 150 slots in each
-// direction). The timer always moves forward; it never needs to jump back.
-// This gives a perfectly seamless, flash-free infinite scroll.
-//
-// Memory cost: the array holds references, not pixel data, so it is negligible.
-// The FlatList renders only the visible + a few windowed items at any time.
-//
-// We start in the middle of the array so there is plenty of room in both
-// directions even if the user swipes manually many times.
-
 const REAL_IMAGES = [
   require('../../../assets/images/hero-doctor.jpg'),
   require('../../../assets/images/hospitaldoctor4.png'),
   require('../../../assets/images/hospitaldoctor5.png'),
 ];
 const REAL_COUNT  = REAL_IMAGES.length;
-const REPEAT      = 100;                                  // 100 copies each side
+const REPEAT      = 100;
 const TOTAL       = REAL_COUNT * REPEAT * 2;              // 600 slots
 const START_INDEX = Math.floor(TOTAL / 2);                // 300 — begin in middle
-//  START_INDEX is always a multiple of REAL_COUNT so slot 300 shows image 0.
 
-// Build the big array once (references only, not image bytes).
 const CAROUSEL_DATA = Array.from(
   { length: TOTAL },
   (_, i) => REAL_IMAGES[i % REAL_COUNT],
@@ -175,9 +159,6 @@ interface HomeScreenProps {
 export default function HomeScreen({ navigation }: HomeScreenProps) {
   const { logout, user } = useAuth();
 
-  // currentIndex lives in CAROUSEL_DATA space (0..TOTAL-1).
-  // It starts at START_INDEX (middle of the big array) and only ever increases
-  // as the auto-timer fires, so there is never a backward jump and never a flash.
   const currentIndexRef = useRef(START_INDEX);
 
   const [aboutExpanded, setAboutExpanded] = useState(false);
@@ -210,19 +191,10 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
 
   const handleProfilePress = () => navigation?.navigate?.('Dashboard');
 
-  // ── Auto-advance: always forward, never jumps back, never flashes ─────────
-  //
-  // Every 4 s we increment currentIndexRef and call scrollToIndex with
-  // animated: true. Because CAROUSEL_DATA is 600 slots long and we start
-  // in the middle, the FlatList never reaches either end during any realistic
-  // usage. No ghost slots, no silent jumps, no race conditions — the flash
-  // is physically impossible with this approach.
-  //
-  // We keep the index in a ref (not state) so updating it never triggers a
-  // re-render. The FlatList handles its own position internally.
+  // ── Auto-advance: modulo clamp prevents out-of-range crash ────────────────
   useEffect(() => {
     const timer = setInterval(() => {
-      const next = (currentIndexRef.current + 1) % TOTAL;
+      const next = (currentIndexRef.current + 1) % TOTAL; // ← never exceeds 599
       currentIndexRef.current = next;
       flatListRef.current?.scrollToIndex({ index: next, animated: true });
     }, 4000);
@@ -271,19 +243,19 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
               horizontal
               pagingEnabled
               showsHorizontalScrollIndicator={false}
-              // Mandatory for initialScrollIndex to work without a warning
               initialScrollIndex={START_INDEX}
               getItemLayout={(_, index) => ({
                 length: width,
                 offset: width * index,
                 index,
               })}
-              // windowSize controls how many screens worth of items are kept
-              // in memory around the current position. 3 = prev + current + next,
-              // which is the minimum needed for smooth sliding.
               windowSize={3}
-              // Removes items far from viewport to keep memory flat
               removeClippedSubviews
+              // ── Keep ref in sync when user swipes manually ──────────────
+              onMomentumScrollEnd={(e) => {
+                const idx = Math.round(e.nativeEvent.contentOffset.x / width);
+                currentIndexRef.current = idx;
+              }}
               renderItem={({ item }) => (
                 <View style={styles.heroSlide}>
                   <Image source={item} style={styles.heroImage} resizeMode="cover" />
@@ -292,7 +264,6 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
             />
 
             {/* ── Overlay: SignOut (left) │ Notification + Profile (right) ── */}
-            {/* Dots and badge are both removed as requested                    */}
             <View style={styles.heroOverlay}>
               <View style={styles.heroOverlayRow}>
 
@@ -499,7 +470,6 @@ const styles = StyleSheet.create({
   },
   heroImage: { width, height: 396 },
 
-  // Dots and badge are both fully removed — no remnant styles kept
   heroOverlay:    { position: 'absolute', top: 0, left: 0, right: 0 },
   heroOverlayRow: {
     flexDirection: 'row', justifyContent: 'space-between',
