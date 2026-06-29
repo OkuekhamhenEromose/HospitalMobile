@@ -20,7 +20,7 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/logo.png",
+        "foregroundImage": "./assets/images/logo-1024.png",
         "backgroundColor": "#1378e5"
       },
       "package": "com.ethaatlantic.mobile"

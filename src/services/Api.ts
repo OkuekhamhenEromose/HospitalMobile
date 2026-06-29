@@ -80,10 +80,10 @@ export interface NormalizedBlogPost {
 }
 
 // TTLs
-const TTL_BLOG       = 5  * 60 * 1000;
+const TTL_BLOG = 5 * 60 * 1000;
 const TTL_CATEGORIES = 10 * 60 * 1000;
-const TTL_PERSONAL   = 2  * 60 * 1000;
-const TTL_LIST       = 3  * 60 * 1000;
+const TTL_PERSONAL = 2 * 60 * 1000;
+const TTL_LIST = 3 * 60 * 1000;
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -143,12 +143,12 @@ function normalizeBlogPost(raw: Record<string, unknown>): NormalizedBlogPost {
   return {
     ...raw,
     featured_image: featured,
-    image_1:        img1,
-    image_2:        img2,
-    description:    (raw.description ?? raw.short_description ?? raw.excerpt ?? raw.content ?? '') as string,
-    subheadings:    Array.isArray(raw.subheadings) ? raw.subheadings : [],
+    image_1: img1,
+    image_2: img2,
+    description: (raw.description ?? raw.short_description ?? raw.excerpt ?? raw.content ?? '') as string,
+    subheadings: Array.isArray(raw.subheadings) ? raw.subheadings : [],
     table_of_contents: (raw.table_of_contents ?? raw.toc ?? raw.toc_items ?? []) as any[],
-    category:       raw.category as BlogCategory | null ?? null,
+    category: raw.category as BlogCategory | null ?? null,
   } as NormalizedBlogPost;
 }
 
@@ -186,11 +186,11 @@ class ApiService {
     options: RequestInit = {},
     includeAuth = true,
   ): Promise<T> {
-    const url         = `${API_BASE_URL}${endpoint}`;
-    const isFormData  = options.body instanceof FormData;
-    const headers     = await this.buildHeaders(includeAuth, isFormData);
-    const method      = (options.method ?? 'GET').toUpperCase();
-    const requestKey  = `${method}:${endpoint}`;
+    const url = `${API_BASE_URL}${endpoint}`;
+    const isFormData = options.body instanceof FormData;
+    const headers = await this.buildHeaders(includeAuth, isFormData);
+    const method = (options.method ?? 'GET').toUpperCase();
+    const requestKey = `${method}:${endpoint}`;
 
     // Dedup in-flight GET requests
     if (method === 'GET' && this.requestQueue.has(requestKey)) {
@@ -198,7 +198,7 @@ class ApiService {
     }
 
     const controller = new AbortController();
-    const timeoutId  = setTimeout(() => controller.abort(), 30_000);
+    const timeoutId = setTimeout(() => controller.abort(), 30_000);
 
     const promise = (async (): Promise<T> => {
       try {
@@ -275,10 +275,11 @@ class ApiService {
     const refresh = await storageService.getRefreshToken();
     if (!refresh) throw new ApiError('No refresh token available');
 
-    const response = await fetch(`${API_BASE_URL}/users/token/refresh/`, {
-      method:  'POST',
+    // api.ts — refreshToken() — fix the URL
+    const response = await fetch(`${API_BASE_URL.replace('/api', '')}/api/token/refresh/`, {
+      method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body:    JSON.stringify({ refresh }),
+      body: JSON.stringify({ refresh }),
     });
 
     if (!response.ok) {
@@ -287,16 +288,16 @@ class ApiService {
     }
 
     const data = (await response.json()) as TokenResponse;
-    if (data.access)  await storageService.setAccessToken(data.access);
+    if (data.access) await storageService.setAccessToken(data.access);
     if (data.refresh) await storageService.setRefreshToken(data.refresh);
     return data;
   }
 
   async login(data: LoginData): Promise<AuthResponse> {
     const response = await fetch(`${API_BASE_URL}/users/login/`, {
-      method:  'POST',
+      method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body:    JSON.stringify({ username: data.username, password: data.password }),
+      body: JSON.stringify({ username: data.username, password: data.password }),
     });
 
     if (!response.ok) {
@@ -316,9 +317,9 @@ class ApiService {
 
   async register(data: RegisterData): Promise<unknown> {
     const response = await fetch(`${API_BASE_URL}/users/register/`, {
-      method:  'POST',
+      method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body:    JSON.stringify(data),
+      body: JSON.stringify(data),
     });
 
     if (!response.ok) {
@@ -342,7 +343,7 @@ class ApiService {
       try {
         await this.request('/users/logout/', {
           method: 'POST',
-          body:   JSON.stringify({ refresh }),
+          body: JSON.stringify({ refresh }),
         });
       } catch { /* ignore */ }
     }
@@ -365,7 +366,7 @@ class ApiService {
     this.invalidateCache('/hospital/appointments/');
     return this.requestWithRefresh('/hospital/appointments/create/', {
       method: 'POST',
-      body:   JSON.stringify(payload),
+      body: JSON.stringify(payload),
     });
   }
 
