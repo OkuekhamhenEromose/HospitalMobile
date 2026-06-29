@@ -9,20 +9,20 @@ import React, {
   useEffect,
   useCallback,
   type ReactNode,
-} from 'react';
-import { apiService } from '../services/api';
-import { storageService } from '../services/storage';
-import type { User, LoginData, RegisterData } from '../types';
+} from "react";
+import { apiService, isTokenExpired } from "../services/api";
+import { storageService } from "../services/storage";
+import type { User, LoginData, RegisterData } from "../types";
 
 // ── Context shape ──────────────────────────────────────────────────────────────
 
 interface AuthContextType {
-  user:        User | null;
-  loading:     boolean;
-  login:       (data: LoginData)    => Promise<void>;
-  register:    (data: RegisterData) => Promise<void>;
-  logout:      ()                   => Promise<void>;
-  refreshUser: ()                   => Promise<void>;
+  user: User | null;
+  loading: boolean;
+  login: (data: LoginData) => Promise<void>;
+  register: (data: RegisterData) => Promise<void>;
+  logout: () => Promise<void>;
+  refreshUser: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -31,14 +31,16 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const useAuth = (): AuthContextType => {
   const ctx = useContext(AuthContext);
-  if (!ctx) throw new Error('useAuth must be used within <AuthProvider>');
+  if (!ctx) throw new Error("useAuth must be used within <AuthProvider>");
   return ctx;
 };
 
 // ── Provider ───────────────────────────────────────────────────────────────────
 
-export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [user,    setUser]    = useState<User | null>(null);
+export const AuthProvider: React.FC<{ children: ReactNode }> = ({
+  children,
+}) => {
+  const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
   /**
@@ -52,29 +54,49 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       setLoading(true);
 
       const token = await storageService.getAccessToken();
+
+      // No token at all → send to Welcome
       if (!token) {
         setUser(null);
         return;
       }
 
-      // Show cached user immediately so the UI doesn't stay blank
+      // Token is definitively expired → try refresh before giving up
+      if (isTokenExpired(token)) {
+        try {
+          await apiService.refreshToken();
+          // Refresh succeeded — fall through to server verify below
+        } catch {
+          // Refresh also failed → token is dead, send to Welcome
+          await storageService.clearAll();
+          setUser(null);
+          return;
+        }
+      }
+
+      // Token is valid (or just refreshed) — hydrate UI from cache instantly
       const cached = await storageService.getUserData();
       if (cached) setUser(cached);
 
-      // Verify with server (auto-refreshes the token if expired)
+      // Verify with server to get fresh user data
       try {
         const response = await apiService.getDashboard();
         if (response?.user) {
           setUser(response.user);
           await storageService.setUserData(response.user);
         }
-      } catch {
-        // Server check failed — keep the cached user to avoid unnecessary
-        // log-outs during transient network issues, but clear storage if
-        // there was nothing cached either (token is definitively bad).
-        if (!cached) {
+      } catch (err: any) {
+        if (err?.status === 401) {
+          // Definitively rejected by server → Welcome
           await storageService.clearAll();
           setUser(null);
+        } else {
+          // Transient network error — keep cached user, stay on Main
+          // (offline-tolerant: don't log out a valid user just because wifi dropped)
+          if (!cached) {
+            await storageService.clearAll();
+            setUser(null);
+          }
         }
       }
     } catch {
@@ -85,7 +107,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   }, []);
 
-  useEffect(() => { checkAuth(); }, [checkAuth]);
+  useEffect(() => {
+    checkAuth();
+  }, [checkAuth]);
 
   // ── Auth actions ────────────────────────────────────────────────────────────
 
@@ -102,7 +126,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     // 2. Auto-login with the same credentials (mirrors the web flow)
     const loginResponse = await apiService.login({
       username: data.username,
-      password: data.password1,  // backend field is password1
+      password: data.password1, // backend field is password1
     });
     setUser(loginResponse.user);
   }, []);
@@ -111,8 +135,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     try {
       // Blacklist the refresh token on the server
       await apiService.logout();
-    } catch { /* storage is already cleared inside apiService.logout() */ }
-    finally {
+    } catch {
+      /* storage is already cleared inside apiService.logout() */
+    } finally {
       setUser(null);
     }
   }, []);
@@ -124,7 +149,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   // ── Value ───────────────────────────────────────────────────────────────────
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout, refreshUser }}>
+    <AuthContext.Provider
+      value={{ user, loading, login, register, logout, refreshUser }}
+    >
       {children}
     </AuthContext.Provider>
   );

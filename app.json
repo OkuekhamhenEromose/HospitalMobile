@@ -21,7 +21,7 @@
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/logo-1024.png",
-        "backgroundColor": "#1378e5"
+        "backgroundColor": "#ffffff"
       },
       "package": "com.ethaatlantic.mobile",
       "versionCode": 1,

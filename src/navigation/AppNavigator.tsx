@@ -1,5 +1,4 @@
 // src/navigation/AppNavigator.tsx
-// Added BlogPost (detail) screen to RootStackParamList and the navigator.
 
 import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
@@ -9,16 +8,16 @@ import Svg, { Path } from 'react-native-svg';
 import { useAuth } from '../contexts/AuthContext';
 import LoadingSpinner from '../components/common/LoadingSpinner';
 
-import WelcomeScreen    from '../screens/Welcome/WelcomeScreen';
-import HomeScreen       from '../screens/Home/HomeScreen';
-import AboutScreen      from '../screens/About/AboutScreen';
-import ServicesScreen   from '../screens/Services/ServicesScreen';
-import BlogListScreen   from '../screens/Blog/BlogListScreen';   // tab entry = blog list
-import BlogPostDetail   from '../screens/Blog/BlogPostDetail';   // ← NEW full-post screen
-import ContactScreen    from '../screens/Contact/ContactScreen';
-import DashboardScreen  from '../screens/Dashboard/DashboardScreen';
-import LoginScreen      from '../screens/Auth/LoginScreen';
-import RegisterScreen   from '../screens/Auth/RegisterScreen';
+import WelcomeScreen   from '../screens/Welcome/WelcomeScreen';
+import HomeScreen      from '../screens/Home/HomeScreen';
+import AboutScreen     from '../screens/About/AboutScreen';
+import ServicesScreen  from '../screens/Services/ServicesScreen';
+import BlogListScreen  from '../screens/Blog/BlogListScreen';
+import BlogPostDetail  from '../screens/Blog/BlogPostDetail';
+import ContactScreen   from '../screens/Contact/ContactScreen';
+import DashboardScreen from '../screens/Dashboard/DashboardScreen';
+import LoginScreen     from '../screens/Auth/LoginScreen';
+import RegisterScreen  from '../screens/Auth/RegisterScreen';
 
 import type { MainTabParamList, AuthStackParamList } from '../types/navigation';
 import type { BlogPost } from '../types';
@@ -26,10 +25,9 @@ import type { BlogPost } from '../types';
 // ── Param lists ───────────────────────────────────────────────────────────────
 
 export type RootStackParamList = {
-  Main:        undefined;
-  Auth:        undefined;
-  Welcome:     undefined;
-  /** Full blog post — pass shallow `post` object from list OR just `slug`. */
+  Welcome:  undefined;
+  Auth:     undefined;
+  Main:     undefined;
   BlogPost: { post?: BlogPost; slug?: string };
 };
 
@@ -37,7 +35,7 @@ const Stack     = createNativeStackNavigator<RootStackParamList>();
 const AuthStack = createNativeStackNavigator<AuthStackParamList>();
 const Tab       = createBottomTabNavigator<MainTabParamList>();
 
-// ─── SVG Tab Icons (unchanged) ────────────────────────────────────────────────
+// ── SVG Tab Icons ─────────────────────────────────────────────────────────────
 
 const HomeIcon = ({ color, size }: { color: string; size: number }) => (
   <Svg width={size} height={size} viewBox="0 0 24 24">
@@ -90,7 +88,7 @@ const TAB_ICONS: Record<TabIconName, React.FC<{ color: string; size: number }>> 
   Blog: BlogIcon, Contact: ContactIcon,
 };
 
-// ─── Auth navigator ───────────────────────────────────────────────────────────
+// ── Auth navigator ────────────────────────────────────────────────────────────
 
 const AuthNavigator: React.FC = () => (
   <AuthStack.Navigator screenOptions={{ headerShown: false }}>
@@ -99,7 +97,7 @@ const AuthNavigator: React.FC = () => (
   </AuthStack.Navigator>
 );
 
-// ─── Main bottom tabs ─────────────────────────────────────────────────────────
+// ── Main bottom tabs ──────────────────────────────────────────────────────────
 
 const MainTabs: React.FC = () => (
   <Tab.Navigator
@@ -119,7 +117,7 @@ const MainTabs: React.FC = () => (
     <Tab.Screen name="Blog"     component={BlogListScreen} />
     <Tab.Screen name="Contact"  component={ContactScreen} />
 
-    {/* Dashboard hidden from tab bar but reachable via navigate() */}
+    {/* Dashboard hidden from tab bar but reachable via navigate('Dashboard') */}
     <Tab.Screen
       name="Dashboard"
       component={DashboardScreen}
@@ -128,7 +126,7 @@ const MainTabs: React.FC = () => (
   </Tab.Navigator>
 );
 
-// ─── Root navigator ───────────────────────────────────────────────────────────
+// ── Root navigator ────────────────────────────────────────────────────────────
 
 const AppNavigator: React.FC = () => {
   const { loading, user } = useAuth();
@@ -139,13 +137,13 @@ const AppNavigator: React.FC = () => {
     <NavigationContainer>
       <Stack.Navigator screenOptions={{ headerShown: false }}>
         {user ? (
+          // ── Authenticated stack ──────────────────────────────────────────
           <>
-            <Stack.Screen name="Main"     component={MainTabs} />
             {/*
-              BlogPost lives OUTSIDE the tab navigator so it gets a clean
-              full-screen presentation with no bottom tab bar.
-              navigation.navigate('BlogPost', { post, slug }) from anywhere.
+              Main tabs is the first screen so it shows immediately after login.
+              BlogPost sits outside tabs so it renders full-screen with no tab bar.
             */}
+            <Stack.Screen name="Main"    component={MainTabs} />
             <Stack.Screen
               name="BlogPost"
               component={BlogPostDetail}
@@ -153,9 +151,15 @@ const AppNavigator: React.FC = () => {
             />
           </>
         ) : (
+          // ── Unauthenticated stack ────────────────────────────────────────
           <>
-            <Stack.Screen name="Auth"    component={AuthNavigator} />
+            {/*
+              Welcome MUST be first — React Navigation always renders the first
+              screen in the stack as the initial route. Putting Auth first was
+              what caused the app to open directly on the Login screen.
+            */}
             <Stack.Screen name="Welcome" component={WelcomeScreen} />
+            <Stack.Screen name="Auth"    component={AuthNavigator} />
           </>
         )}
       </Stack.Navigator>
