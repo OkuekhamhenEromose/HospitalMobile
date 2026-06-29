@@ -23,13 +23,16 @@
         "foregroundImage": "./assets/images/logo-1024.png",
         "backgroundColor": "#1378e5"
       },
-      "package": "com.ethaatlantic.mobile"
-    },
-    "web": {
-      "favicon": "./src/assets/images/favicon.png"
+      "package": "com.ethaatlantic.mobile",
+      "versionCode": 1,
+      "permissions": [
+        "INTERNET",
+        "ACCESS_NETWORK_STATE"
+      ]
     },
     "plugins": [
-      "expo-font"
+      "expo-font",
+      "expo-dev-client"
     ],
     "extra": {
       "eas": {
