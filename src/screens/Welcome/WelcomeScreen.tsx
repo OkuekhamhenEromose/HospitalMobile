@@ -35,7 +35,7 @@ const SLIDES = [
     accentBg: '#dbeafe',
     title: 'World-Class\nHospital Care',
     subtitle:
-      'Etta-Atlantic Memorial Hospital brings specialist-grade healthcare to Ikate Lekki, Lagos — at your fingertips.',
+      'Lumen Healthcare brings specialist-grade healthcare to Ikate Lekki, Lagos — at your fingertips.',
   },
   {
     key: '2',

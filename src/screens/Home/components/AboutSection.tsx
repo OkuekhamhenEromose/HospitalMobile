@@ -19,7 +19,7 @@ const AboutSection: React.FC<AboutSectionProps> = ({ onBookNow }) => {
         style={styles.header}
       >
         <Text style={styles.headerText}>
-          Etta-Atlantic Memorial Hospital Lekki Lagos is the best hospital in Lagos,
+          Lumen Healthcare CenterAdeola Odeku Street, Victoria Island, Lagos is the best hospital in Lagos,
           Nigeria. Our standards are in line with the World Health Organization and
           principled on evidence-based medicine.
         </Text>

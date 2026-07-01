@@ -27,13 +27,13 @@ const ServicesSection: React.FC = () => {
       icon: 'hotel',
       title: 'Surgery',
       description:
-        'Etha-Atlantic Memorial Hospital Ikate Lekki Lagos has a state of the art surgical centre offering a wide range of surgical services.',
+        'Lumen Healthcare Center No 15 Adeola Odeku Street Victoria Island Lagos has a state of the art surgical centre offering a wide range of surgical services.',
     },
     {
       icon: 'family-restroom',
       title: 'Family Healthcare',
       description:
-        'Visit Etha-Atlantic Memorial Hospital in Ikate Lekki Lagos for preventive health screenings (check-ups) for you and your family.',
+        'Visit Lumen Healthcare Center No 15 Adeola Odeku Street Victoria Island Lagos for preventive health screenings (check-ups) for you and your family.',
     },
     {
       icon: 'local-pharmacy',
@@ -45,15 +45,15 @@ const ServicesSection: React.FC = () => {
       icon: 'health-and-safety',
       title: 'Health Insurance',
       description:
-        'Fortunately, Etha-Atlantic Memorial Hospital Ikate Lekki Lagos work collaboratively with various Health Maintenance Organizations (HMOs) to ensure adequate coverage for your healthcare.',
+        'Fortunately, Lumen Healthcare Center No 15 Adeola Odeku Street Victoria Island Lagos work collaboratively with various Health Maintenance Organizations (HMOs) to ensure adequate coverage for your healthcare.',
     },
   ];
 
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.title}>Etha-Atlantic Memorial Hospital</Text>
-        <Text style={styles.titleHighlight}>Ikate Lekki Lagos</Text>
+        <Text style={styles.title}>Lumen Healthcare Center</Text>
+        <Text style={styles.titleHighlight}>No 15 Adeola Odeku Street Victoria Island Lagos</Text>
         <Text style={styles.subtitle}>Our Medical Services</Text>
       </View>
 

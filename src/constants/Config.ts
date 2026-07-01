@@ -17,11 +17,11 @@ export const STORAGE_KEYS = {
 };
 
 export const APP_CONFIG = {
-  APP_NAME: 'Etha-Atlantic Memorial Hospital',
-  APP_TAGLINE: 'Ikate Lekki, Lagos',
+  APP_NAME: 'Lumen Health',
+  APP_TAGLINE: 'Adeola Odeku Street, Victoria Island, Lagos',
   CONTACT_PHONE: '08083734008',
-  CONTACT_EMAIL: 'hello@ettaatlantic.com',
-  ADDRESS: '22 Abioro Street, Ikate Lekki, Lagos State, Nigeria',
+  CONTACT_EMAIL: 'hello@lumen.com',
+  ADDRESS: 'No 15 Adeola Odeku Street, Victoria Island, Lagos State, Nigeria',
   
   SOCIAL_MEDIA: {
     FACEBOOK: 'https://facebook.com/ethaatlantic',

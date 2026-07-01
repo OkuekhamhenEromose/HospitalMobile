@@ -144,7 +144,7 @@ const SHARE_PLATFORMS: SharePlatform[] = [
 ];
 
 function sharePost(platform: string, post: BlogPost) {
-  const url = `https://ettaatlantic.com/blog/${post.slug}`;
+  const url = `https://lumen.com/blog/${post.slug}`;
   const urls: Record<string, string> = {
     facebook: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`,
     twitter:  `https://twitter.com/intent/tweet?url=${encodeURIComponent(url)}&text=${encodeURIComponent(post.title)}`,
@@ -356,7 +356,7 @@ export default function BlogScreen({ navigation }: BlogScreenProps) {
             <Text style={h.avatarText}>EA</Text>
           </View>
           <View>
-            <Text style={h.authorName}>{(item as any).author_name ?? 'Etha-Atlantic'}</Text>
+            <Text style={h.authorName}>{(item as any).author_name ?? 'Lumen'}</Text>
             <Text style={h.authorDate}>{formatDate(item.created_at)}</Text>
           </View>
           <View style={h.catBadge}>

@@ -57,11 +57,11 @@ const HeroSection: React.FC<HeroSectionProps> = ({
           <Text style={styles.welcomeText}>Welcome to</Text>
           
           <Text style={styles.title}>
-            Etta-Atlantic Memorial Hospital Ikate Lekki Lagos
+            Lumen Healthcare Center Adeola Odeku Street, Victoria Island, Lagos
           </Text>
 
           <Text style={styles.description}>
-            Etta-Atlantic Memorial Hospital Lekki stands as the premier private
+            Lumen Healthcare Center Adeola Odeku Street, Victoria Island, Lagos stands as the premier private
             hospital in Lekki, Lagos. Our foundation was laid with the singular
             purpose of delivering world-class healthcare to the community of Lagos
             and the broader Nigerian populace.

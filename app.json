@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "Etha-Atlantic Memorial",
-    "slug": "etha-atlantic-mobile",
+    "name": "Lumen-HealthCare",
+    "slug": "lumen-mobile",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -16,14 +16,14 @@
     ],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.ethaatlantic.mobile"
+      "bundleIdentifier": "com.lumen.mobile"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/logo-1024.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.ethaatlantic.mobile",
+      "package": "com.lumen.mobile",
       "versionCode": 1,
       "permissions": [
         "INTERNET",

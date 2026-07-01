@@ -30,14 +30,14 @@ const Footer: React.FC<FooterProps> = ({
   };
 
   const handleEmailPress = () => {
-    Linking.openURL('mailto:hello@ettaatlantic.com');
+    Linking.openURL('mailto:hello@lumen.com');
   };
 
   const handleSocialPress = (platform: string) => {
     const urls: Record<string, string> = {
-      facebook: 'https://facebook.com/ethaatlantic',
-      twitter: 'https://twitter.com/ethaatlantic',
-      instagram: 'https://instagram.com/ethaatlantic',
+      facebook: 'https://facebook.com/lumen',
+      twitter: 'https://twitter.com/lumen',
+      instagram: 'https://instagram.com/lumen',
     };
     if (urls[platform]) {
       Linking.openURL(urls[platform]);
@@ -67,7 +67,7 @@ const Footer: React.FC<FooterProps> = ({
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>About Us</Text>
         <TouchableOpacity onPress={onAboutPress}>
-          <Text style={styles.link}>About Etta-Atlantic Memorial</Text>
+          <Text style={styles.link}>About Lumen Healthcare</Text>
         </TouchableOpacity>
         <TouchableOpacity>
           <Text style={styles.link}>News & Articles</Text>
@@ -103,7 +103,7 @@ const Footer: React.FC<FooterProps> = ({
         </TouchableOpacity>
 
         <TouchableOpacity onPress={handleEmailPress}>
-          <Text style={styles.email}>hello@ettaatlantic.com</Text>
+          <Text style={styles.email}>hello@lumen.com</Text>
         </TouchableOpacity>
 
         <Text style={styles.socialText}>Visit us on social networks:</Text>
@@ -135,7 +135,7 @@ const Footer: React.FC<FooterProps> = ({
       {/* Copyright */}
       <View style={styles.copyrightSection}>
         <Text style={styles.copyright}>
-          © 2026 Etta-Atlantic Memorial Hospital | All rights reserved.
+          © 2026 Lumen Healthcare Center | All rights reserved.
         </Text>
 
         <TouchableOpacity

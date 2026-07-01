@@ -31,7 +31,7 @@ const BookAppointmentSection: React.FC<BookAppointmentSectionProps> = ({
 
           <View style={styles.card}>
             <Text style={styles.cardText}>
-              Etha-Atlantic Memorial Hospital Lekki Lagos has the best medical
+              Lumen Healthcare No 15 Adeola Odeku Street, Victoria Island Lagos has the best medical
               specialists on ground with impeccable track records. We pay attention to
               standards and follow best practices.
             </Text>

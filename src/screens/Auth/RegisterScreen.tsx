@@ -253,7 +253,7 @@ export default function RegisterScreen({ navigation }: Props) {
           <View style={styles.header}>
             <Image source={ETTA_LOGO} style={styles.logo} resizeMode="contain" />
             <Text style={styles.cardTitle}>Let's Get Started!</Text>
-            <Text style={styles.cardSub}>Create your Etha-Atlantic health portal account</Text>
+            <Text style={styles.cardSub}>Create your Lumen health portal account</Text>
           </View>
 
           {/* Card */}

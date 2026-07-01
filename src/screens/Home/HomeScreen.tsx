@@ -147,7 +147,7 @@ const STATS = [
 
 // ── About text ────────────────────────────────────────────────────────────────
 const ABOUT_FULL =
-  "Etta-Atlantic Memorial Hospital Lekki Lagos is the best hospital in Lagos, Nigeria. " +
+  "Lumen Healthcare Center Adeola Odeku Street, Victoria Island, Lagos is the best hospital in Lagos, Nigeria. " +
   "Our standards are in line with the World Health Organization and principled on " +
   "evidence-based medicine. We have teamed up with highly qualified physicians and " +
   "health professionals to provide excellent care to all our patients.";
@@ -232,7 +232,7 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
 
   const handleContact = () => {
     const msg =
-      "Hi! I'd like to enquire about Etta-Atlantic Memorial Hospital services.";
+      "Hi! I'd like to enquire aboutLumen Healthcare services.";
     Linking.openURL(
       `https://wa.me/${WHATSAPP_NUM}?text=${encodeURIComponent(msg)}`,
     );
@@ -343,7 +343,7 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
           </View>
 
           {/* Name + Specialty */}
-          <Text style={styles.heroName}>Etta-Atlantic Memorial Hospital</Text>
+          <Text style={styles.heroName}>Lumen Healthcare Center</Text>
           <Text style={styles.heroSpec}>
             Specialist Physicians · Ikate Lekki, Lagos
           </Text>

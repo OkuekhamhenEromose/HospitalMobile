@@ -239,7 +239,7 @@ export default function BlogPostDetail({ navigation, route }: Props) {
   const img1Url      = (post as any).image_1_url ?? (post as any).image_1;
   const img2Url      = (post as any).image_2_url ?? (post as any).image_2;
   const categoryName = (post as any).category?.name ?? 'General Health';
-  const authorName   = (post as any).author_name ?? 'Etha-Atlantic';
+  const authorName   = (post as any).author_name ?? 'Lumen';
   const tocItems: TableOfContentsItem[] = post.table_of_contents ?? [];
   const subheadings: SubHeading[]        = post.subheadings ?? [];
   const hasTOC = (post as any).enable_toc !== false && tocItems.length > 0;
@@ -452,7 +452,7 @@ export default function BlogPostDetail({ navigation, route }: Props) {
               <Text style={st.authorCardAvatarTxt}>EA</Text>
             </View>
             <View style={{ flex: 1 }}>
-              <Text style={st.authorCardName}>Etha-Atlantic Memorial Hospital</Text>
+              <Text style={st.authorCardName}>Lumen Healthcare Services</Text>
               <Text style={st.authorCardRole}>
                 {(post as any).author_role ?? 'Medical Team'}
               </Text>

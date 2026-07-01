@@ -234,12 +234,12 @@ export default function AboutScreen({ navigation }: AboutScreenProps) {
             <>
               {/* ── About copy ── */}
               <Text style={styles.sectionHeading}>
-                About Etta-Atlantic Memorial Hospital
+                About Lumen Healthcare
               </Text>
               <View style={styles.sectionDivider} />
 
               <Text style={styles.body}>
-                Etta-Atlantic Memorial Hospital Lekki stands as the premier
+                Lumen Healthcare Center Adeola Odeku, Victoria Island stands as the premier
                 private hospital in Lekki, Lagos. Our foundation was laid with
                 the singular purpose of delivering world-class healthcare to the
                 community of Lagos and the broader Nigerian populace.{" "}
@@ -362,7 +362,7 @@ export default function AboutScreen({ navigation }: AboutScreenProps) {
               {[
                 { label: "Location", value: "Ikate Lekki, Lagos, Nigeria" },
                 { label: "Phone", value: "+234 800 000 0000" },
-                { label: "Email", value: "info@ettaatlantic.com" },
+                { label: "Email", value: "info@lumen.com" },
                 { label: "Hours", value: "24 hours, 7 days a week" },
                 { label: "Founded", value: "2018" },
                 { label: "Accredited", value: "WHO Standards Compliant" },

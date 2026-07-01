@@ -108,8 +108,8 @@ export default function LoginScreen({ navigation }: Props) {
           {/* Header */}
           <View style={styles.header}>
             <Image source={ETTA_LOGO} style={styles.logo} resizeMode="contain" />
-            <Text style={styles.appName}>Etha-Atlantic</Text>
-            <Text style={styles.appSub}>Memorial Hospital</Text>
+            <Text style={styles.appName}>Lumen</Text>
+            <Text style={styles.appSub}>Healthcare</Text>
           </View>
 
           {/* Card */}
