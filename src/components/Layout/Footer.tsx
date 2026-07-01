@@ -55,7 +55,7 @@ const Footer: React.FC<FooterProps> = ({
           <MaterialIcons name="local-hospital" size={40} color={COLORS.white} />
         </View>
         <Text style={styles.address}>
-          <Text style={styles.addressBold}>22 Abioro Street, Ikate Lekki,</Text>
+          <Text style={styles.addressBold}>No 15 Adeola Odeku Street, Victoria Island, Lagos,</Text>
           {'\n'}
           <Text style={styles.addressBold}>Lagos State</Text>
           {'\n'}

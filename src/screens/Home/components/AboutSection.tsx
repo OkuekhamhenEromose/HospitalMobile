@@ -74,7 +74,7 @@ const AboutSection: React.FC<AboutSectionProps> = ({ onBookNow }) => {
           <Text style={styles.cardText}>
             We use standard medical and imaging equipment including BiPAP ventilators,
             CTG, defibrillators, ultrasound scan machines, ECG, cardiac monitors, infusion
-            pumps etc. Also, our hospital in Ikate Lekki includes world-class hospital
+            pumps etc. Also, our hospital in No 15 Adeola Odeku Street, Victoria Island includes world-class hospital
             furniture and a well-equipped medical laboratory to cater to all your health
             needs.
           </Text>

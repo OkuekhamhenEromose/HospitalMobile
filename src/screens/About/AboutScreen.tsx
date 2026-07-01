@@ -360,7 +360,7 @@ export default function AboutScreen({ navigation }: AboutScreenProps) {
             /* ── Details tab ── */
             <View style={styles.detailsTab}>
               {[
-                { label: "Location", value: "Ikate Lekki, Lagos, Nigeria" },
+                { label: "Location", value: "No 15 Adeola Odeku Street, Victoria Island, Lagos, Nigeria" },
                 { label: "Phone", value: "+234 800 000 0000" },
                 { label: "Email", value: "info@lumen.com" },
                 { label: "Hours", value: "24 hours, 7 days a week" },

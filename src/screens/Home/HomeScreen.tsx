@@ -345,7 +345,7 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
           {/* Name + Specialty */}
           <Text style={styles.heroName}>Lumen Healthcare Center</Text>
           <Text style={styles.heroSpec}>
-            Specialist Physicians · Ikate Lekki, Lagos
+            Specialist Physicians · No 15 Adeola Odeku Street, Victoria Island, Lagos
           </Text>
 
           {/* Rating */}
@@ -548,7 +548,7 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
           <View style={styles.sectionDivider} />
           <View style={styles.locationRow}>
             <Ionicons name="location-outline" size={16} color={C.muted} />
-            <Text style={styles.locationText}>Ikate Lekki, Lagos, Nigeria</Text>
+            <Text style={styles.locationText}>No 15 Adeola Odeku Street, Victoria Island, Lagos, Nigeria</Text>
           </View>
 
           <TouchableOpacity
